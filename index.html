@@ -1426,7 +1426,9 @@
     // 生成定价表格
     function renderPricingTable() {
       const tbody = document.getElementById('pricingTableBody');
-      const models = pricingPresets.filter((p) => p.id !== 'custom');
+      const models = pricingPresets
+        .filter((p) => p.id !== 'custom')
+        .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
 
       tbody.innerHTML = models.map((preset) => {
         const formatPrice = (val) => val === 0 ? '<span class="price-zero">$0</span>' : `$${val.toFixed(val < 0.01 ? 4 : 2)}`;

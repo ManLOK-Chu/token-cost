@@ -14,6 +14,24 @@
     "note": "按你提供的价格预填。无缓存创建成本。"
   },
   {
+    "id": "gpt54",
+    "name": "GPT-5.4",
+    "priceNew": 2.5,
+    "priceOut": 15,
+    "priceHit": 0.25,
+    "priceCreate": 0,
+    "note": "参考价：输入 $2.50/M、输出 $15/M；缓存读取 $0.25/M。无缓存创建成本。请以官方价格页为准。"
+  },
+  {
+    "id": "gpt54-mini",
+    "name": "GPT-5.4 Mini",
+    "priceNew": 0.75,
+    "priceOut": 4.5,
+    "priceHit": 0.075,
+    "priceCreate": 0,
+    "note": "参考价：输入 $0.75/M、输出 $4.50/M；缓存读取 $0.075/M。无缓存创建成本。请以官方价格页为准。"
+  },
+  {
     "id": "claude-opus-48",
     "name": "Claude Opus 4.8",
     "priceNew": 5,
@@ -93,15 +111,6 @@
     "priceHit": 0.2,
     "priceCreate": 0,
     "note": "参考价：输入 $0.5/M、输出 $2.5/M；缓存读取 $0.2/M。无缓存创建成本。请以官方价格页为准。"
-  },
-  {
-    "id": "cursor-composer-25-fast",
-    "name": "Cursor Composer 2.5 (Fast)",
-    "priceNew": 3,
-    "priceOut": 15,
-    "priceHit": 0.5,
-    "priceCreate": 0,
-    "note": "参考价：输入 $3/M、输出 $15/M；缓存读取 $0.5/M。无缓存创建成本。请以官方价格页为准。"
   },
   {
     "id": "claude-sonnet-5",
