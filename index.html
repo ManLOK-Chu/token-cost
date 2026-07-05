@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Token 计费模拟器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --text: #101828;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --soft-line: #f0f2f5;
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --green: #12b76a;
+      --orange: #f79009;
+      --red: #f04438;
+      --shadow: 0 18px 45px rgba(16, 24, 40, 0.08);
+      --radius: 22px;
+      --card-current-border: #3b82f6;
+      --card-zero-border: #f79009;
+      --card-full-border: #12b76a;
+      --card-delta-border: #98a2b3;
+    }
+
+    :root.dark-mode {
+      color-scheme: dark;
+      --bg: #0f1117;
+      --panel: #1a1d27;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --line: #2d3139;
+      --soft-line: #1f222a;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
+      --card-current-border: #60a5fa;
+      --card-zero-border: #fbbf24;
+      --card-full-border: #34d399;
+      --card-delta-border: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 34rem),
+        linear-gradient(180deg, #fbfcff 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.5;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    :root.dark-mode body {
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 34rem),
+        linear-gradient(180deg, #13151d 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 44px 0 56px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1.06;
+      letter-spacing: -0.045em;
+      background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .formula-pill {
+      align-self: center;
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(59, 130, 246, 0.05) 100%);
+      box-shadow: 0 10px 25px rgba(16, 24, 40, 0.05);
+      color: var(--muted);
+      font-size: 14px;
+      white-space: nowrap;
+      font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .top-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .panel:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 50px rgba(16, 24, 40, 0.12);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 24px 10px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 750;
+      letter-spacing: -0.01em;
+    }
+
+    .panel-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 16px 24px 24px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    :root.dark-mode label {
+      color: #d1d5db;
+    }
+
+    .unit {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid #d0d5dd;
+      border-radius: 14px;
+      padding: 12px 13px;
+      color: var(--text);
+      background: var(--panel);
+      font: inherit;
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    :root.dark-mode input,
+    :root.dark-mode select {
+      select {
+        border-color: #374151;
+      }
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+    }
+
+    input:hover:not(:focus),
+    select:hover:not(:focus) {
+      border-color: #9ca3af;
+    }
+
+    .preset-row {
+      padding: 16px 24px 0;
+    }
+
+    .preset-hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 18px;
+    }
+
+    .card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      border-left: 4px solid transparent;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 50px rgba(16, 24, 40, 0.12);
+    }
+
+    .card:nth-child(1) {
+      border-left-color: var(--card-current-border);
+    }
+
+    .card:nth-child(2) {
+      border-left-color: var(--card-zero-border);
+    }
+
+    .card:nth-child(3) {
+      border-left-color: var(--card-full-border);
+    }
+
+    .card:nth-child(4) {
+      border-left-color: var(--card-delta-border);
+    }
+
+    .card-label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .card-value {
+      margin-top: 8px;
+      display: block;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1;
+      font-weight: 820;
+      letter-spacing: -0.035em;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s ease;
+    }
+
+    .card:nth-child(1) .card-value {
+      color: var(--primary);
+    }
+
+    .card:nth-child(2) .card-value {
+      color: var(--orange);
+    }
+
+    .card:nth-child(3) .card-value {
+      color: var(--green);
+    }
+
+    .card-sub {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 20px;
+    }
+
+    .chart-panel {
+      padding: 0;
+    }
+
+    .chart-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 0 24px 18px;
+    }
+
+    .control-inline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .control-inline input {
+      width: 110px;
+      padding: 9px 11px;
+      font-size: 14px;
+      border-radius: 12px;
+    }
+
+    .model-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--soft-line);
+    }
+
+    .model-selector-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .model-selector-label:hover:not(.disabled) {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .model-selector-label.disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .model-selector-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .model-selector-label.disabled input[type="checkbox"] {
+      cursor: not-allowed;
+    }
+
+    .model-color-indicator {
+      display: inline-block;
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .model-name {
+      white-space: nowrap;
+    }
+
+    .status {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      padding: 0 18px 22px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--soft-line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .axis-label {
+      fill: #667085;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .tick-label {
+      fill: #98a2b3;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .grid-line {
+      stroke: #eef2f6;
+      stroke-width: 1;
+    }
+
+    .axis-line {
+      stroke: #d0d5dd;
+      stroke-width: 1.2;
+    }
+
+    .cost-line {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 8px 10px rgba(37, 99, 235, 0.18));
+    }
+
+    .area-fill {
+      fill: url(#areaGradient);
+    }
+
+    .current-line {
+      stroke: var(--orange);
+      stroke-width: 2;
+      stroke-dasharray: 6 7;
+    }
+
+    .current-dot {
+      fill: var(--orange);
+      stroke: white;
+      stroke-width: 4;
+    }
+
+    .hover-layer {
+      cursor: crosshair;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 3;
+      min-width: 190px;
+      padding: 12px 13px;
+      border: 1px solid rgba(16, 24, 40, 0.08);
+      border-radius: 14px;
+      background: rgba(16, 24, 40, 0.92);
+      color: #fff;
+      box-shadow: 0 16px 32px rgba(16, 24, 40, 0.22);
+      font-size: 13px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, calc(-100% - 12px));
+      transition: opacity 0.12s ease;
+    }
+
+    .tooltip strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .help {
+      margin: 14px 24px 24px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 13px;
+      border: 1px solid var(--soft-line);
+    }
+
+    :root.dark-mode .help {
+      background: #1f222a;
+      border-color: #2d3139;
+    }
+
+    :root.dark-mode .current-dot {
+      stroke: #1a1d27;
+    }
+
+    :root.dark-mode svg {
+      background: linear-gradient(180deg, #1a1d27 0%, #13151d 100%);
+    }
+
+    .help code {
+      color: #344054;
+      font-weight: 700;
+      background: rgba(59, 130, 246, 0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    :root.dark-mode .help code {
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.15);
+    }
+
+    .warning {
+      color: var(--orange);
+      font-weight: 750;
+    }
+
+    footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.95);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .panel,
+    .card {
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .card:nth-child(2) {
+      animation-delay: 0.05s;
+    }
+
+    .card:nth-child(3) {
+      animation-delay: 0.1s;
+    }
+
+    .card:nth-child(4) {
+      animation-delay: 0.15s;
+    }
+
+    .pricing-table-section {
+      margin-top: 24px;
+      margin-bottom: 18px;
+    }
+
+    .pricing-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .pricing-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .pricing-table th,
+    .pricing-table td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--soft-line);
+      white-space: nowrap;
+    }
+
+    .pricing-table th {
+      background: linear-gradient(180deg, rgba(59, 130, 246, 0.05) 0%, transparent 100%);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pricing-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .pricing-table tbody tr:hover {
+      background: rgba(59, 130, 246, 0.03);
+    }
+
+    :root.dark-mode .pricing-table tbody tr:hover {
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .pricing-table td:first-child {
+      font-weight: 650;
+      color: var(--text);
+    }
+
+    .pricing-table td:not(:first-child) {
+      font-variant-numeric: tabular-nums;
+      color: #344054;
+    }
+
+    :root.dark-mode .pricing-table td:not(:first-child) {
+      color: #d1d5db;
+    }
+
+    .price-zero {
+      color: var(--muted) !important;
+      font-style: italic;
+    }
+
+    .pricing-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 920px) {
+      header,
+      .top-grid,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .formula-pill {
+        justify-self: start;
+        white-space: normal;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: min(100% - 20px, 1180px);
+        padding-top: 26px;
+      }
+
+      .inputs {
+        grid-template-columns: 1fr;
+        padding: 14px 16px 18px;
+      }
+
+      .panel-head,
+      .chart-controls {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      .status {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>API Token 计费模拟器</h1>
+        <p class="lead">输入模型的每百万 token 单价和 token 用量，查看缓存命中率从 0% 到 100% 时，总成本如何变化。</p>
+      </div>
+      <div class="formula-pill">Total(h) = 新增输入 + 输出 + 命中缓存 + 创建缓存</div>
+    </header>
+
+    <main>
+      <section class="grid top-grid" aria-label="成本与 token 输入">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">每百万 token 单价</h2>
+              <p class="panel-note">单位统一为美元 / 1M tokens。</p>
+            </div>
+          </div>
+          <div class="preset-row">
+            <label>模型定价预设
+              <select id="pricingPreset"></select>
+            </label>
+            <p id="presetHint" class="preset-hint">预设仅用于快速填充，实际价格请以你的供应商账单或官方价格页为准。</p>
+          </div>
+          <div class="inputs">
+            <label>新增输入成本 <span class="unit">$/1M</span>
+              <input id="priceNew" type="number" min="0" step="0.0001" value="5">
+            </label>
+            <label>输出成本 <span class="unit">$/1M</span>
+              <input id="priceOut" type="number" min="0" step="0.0001" value="30">
+            </label>
+            <label>缓存命中成本 <span class="unit">$/1M</span>
+              <input id="priceHit" type="number" min="0" step="0.0001" value="0.5">
+            </label>
+            <label>缓存创建成本 <span class="unit">$/1M</span>
+              <input id="priceCreate" type="number" min="0" step="0.0001" value="5">
+            </label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+            <h2 class="panel-title">Token 用量</h2>
+              <p class="panel-note">缓存命中率按“命中 / 总输入 token”计算：总输入 = 新增输入 + 缓存命中 + 缓存创建。</p>
+            </div>
+          </div>
+          <div class="inputs">
+            <label>新增输入 tokens
+              <input id="tokensNew" type="number" min="0" step="1" value="799000">
+            </label>
+            <label>输出 tokens
+              <input id="tokensOut" type="number" min="0" step="1" value="24000">
+            </label>
+            <label>当前缓存命中 tokens
+              <input id="tokensHit" type="number" min="0" step="1" value="1983000">
+            </label>
+            <label>当前缓存创建 tokens
+              <input id="tokensCreate" type="number" min="0" step="1" value="0">
+            </label>
+            <label>计费倍率
+              <input id="multiplier" type="number" min="0" step="0.01" value="1">
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid summary-grid" aria-label="计算摘要">
+        <div class="card">
+          <span class="card-label">当前命中率总成本</span>
+          <output id="currentCost" class="card-value">—</output>
+          <div id="currentRateText" class="card-sub">—</div>
+        </div>
+        <div class="card">
+          <span class="card-label">0% 命中率成本</span>
+          <output id="zeroCost" class="card-value">—</output>
+          <div class="card-sub">全部可缓存 token 按创建计费</div>
+        </div>
+        <div class="card">
+          <span class="card-label">100% 命中率成本</span>
+          <output id="fullCost" class="card-value">—</output>
+          <div class="card-sub">全部可缓存 token 按命中计费</div>
+        </div>
+        <div class="card">
+          <span class="card-label">命中率降低 10% 的变化</span>
+          <output id="deltaCost" class="card-value">—</output>
+          <div id="deltaText" class="card-sub">—</div>
+        </div>
+      </section>
+
+      <section class="panel chart-panel" aria-label="成本曲线">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">不同缓存命中率对应的总成本</h2>
+            <p class="panel-note">X 轴为缓存命中率，Y 轴为总成本；橙色虚线表示当前输入推导出的命中率。</p>
+          </div>
+        </div>
+        <div id="modelSelector" class="model-selector">
+          <!-- 模型选择器将由 JavaScript 动态生成 -->
+        </div>
+        <div class="chart-controls">
+          <span id="chartStatus" class="status">—</span>
+        </div>
+        <div class="chart-wrap">
+          <svg id="chart" viewBox="0 0 980 430" role="img" aria-label="缓存命中率与总成本折线图"></svg>
+          <div id="tooltip" class="tooltip" aria-hidden="true"></div>
+        </div>
+        <div class="help">
+          计算假设：缓存命中率按 <code>缓存命中 / 总输入 token</code> 计算；总输入 token 在不同命中率下保持不变，未命中的输入部分按当前“新增输入 / 缓存创建”的比例拆分计费。
+          <span id="inlineWarning"></span>
+        </div>
+      </section>
+    </main>
+
+    <section class="pricing-table-section" aria-label="模型定价参考表">
+      <h2 class="panel-title" style="margin-bottom: 16px; padding-left: 4px;">预设模型定价参考</h2>
+      <div class="pricing-table-wrap">
+        <table class="pricing-table">
+          <thead>
+            <tr>
+              <th>模型</th>
+              <th>输入 ($/M)</th>
+              <th>输出 ($/M)</th>
+              <th>缓存命中 ($/M)</th>
+              <th>缓存创建 ($/M)</th>
+            </tr>
+          </thead>
+          <tbody id="pricingTableBody">
+            <!-- 表格内容由 JavaScript 动态生成 -->
+          </tbody>
+        </table>
+      </div>
+      <p class="pricing-note">* 价格仅供参考，实际费用请以各厂商官方价格页为准</p>
+    </section>
+
+    <footer>
+      <p>API Token 计费模拟器 · 数据仅供参考，实际费用请以供应商账单为准</p>
+    </footer>
+  </div>
+
+  <button class="theme-toggle" id="themeToggle" title="切换深色/浅色模式">🌙</button>
+
+  <script>
+    // 主题切换逻辑
+    const THEME_KEY = 'token-calc-theme';
+    const themeToggle = document.getElementById('themeToggle');
+
+    function getSystemTheme() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark-mode');
+        themeToggle.textContent = '☀️';
+        themeToggle.title = '切换到浅色模式';
+      } else {
+        document.documentElement.classList.remove('dark-mode');
+        themeToggle.textContent = '🌙';
+        themeToggle.title = '切换到深色模式';
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark-mode');
+      const newTheme = isDark ? 'light' : 'dark';
+      applyTheme(newTheme);
+      try { localStorage.setItem(THEME_KEY, newTheme); } catch (_) {}
+    }
+
+    // 初始化主题
+    (function initTheme() {
+      try {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved) {
+          applyTheme(saved);
+        } else {
+          applyTheme(getSystemTheme());
+        }
+      } catch (_) {
+        applyTheme(getSystemTheme());
+      }
+    })();
+
+    themeToggle.addEventListener('click', toggleTheme);
+
+    // 监听系统主题变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem(THEME_KEY)) {
+        applyTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+
+    const MILLION = 1_000_000;
+    const chartSize = { width: 980, height: 430 };
+    const margin = { top: 34, right: 34, bottom: 58, left: 78 };
+    const STORAGE_KEY = 'token-cost-calculator';
+    const fields = [
+      'priceNew', 'priceOut', 'priceHit', 'priceCreate',
+      'tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate', 'multiplier', 'pricingPreset'
+    ];
+
+    const pricingPresets = [
+      {
+        id: 'custom',
+        name: '自定义 / 手动输入',
+        note: '不会覆盖当前输入框，适合填写你的实际账单价格。'
+      },
+      {
+        id: 'gpt55',
+        name: 'GPT-5.5',
+        priceNew: 5,
+        priceOut: 30,
+        priceHit: 0.5,
+        priceCreate: 0,
+        note: '按你提供的价格预填。无缓存创建成本。'
+      },
+      {
+        id: 'claude-opus-48',
+        name: 'Claude Opus 4.8',
+        priceNew: 5,
+        priceOut: 25,
+        priceHit: 0.5,
+        priceCreate: 6.25,
+        note: '参考价：输入 $5/M、输出 $25/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。'
+      },
+      {
+        id: 'claude-sonnet-46',
+        name: 'Claude Sonnet 4.6',
+        priceNew: 3,
+        priceOut: 15,
+        priceHit: 0.3,
+        priceCreate: 3.75,
+        note: '参考价：输入 $3/M、输出 $15/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。'
+      },
+      {
+        id: 'claude-fable-5',
+        name: 'Claude Fable 5',
+        priceNew: 10,
+        priceOut: 50,
+        priceHit: 1,
+        priceCreate: 12.5,
+        note: '参考价：输入 $10/M、输出 $50/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。'
+      },
+      {
+        id: 'deepseek-v4-pro',
+        name: 'DeepSeek V4 Pro',
+        priceNew: 1.74,
+        priceOut: 3.48,
+        priceHit: 0.0145,
+        priceCreate: 0,
+        note: '参考价：输入 $1.74/M、输出 $3.48/M；缓存命中约输入价的 8%。无缓存创建成本。'
+      },
+      {
+        id: 'deepseek-v4-flash',
+        name: 'DeepSeek V4 Flash',
+        priceNew: 0.14,
+        priceOut: 0.28,
+        priceHit: 0.0028,
+        priceCreate: 0,
+        note: '参考价：输入 $0.14/M、输出 $0.28/M；缓存命中约输入价的 2%。无缓存创建成本。性价比极高。'
+      },
+      {
+        id: 'glm-52',
+        name: 'GLM-5.2',
+        priceNew: 1.4,
+        priceOut: 4.4,
+        priceHit: 0.26,
+        priceCreate: 0,
+        note: '参考价：输入 $1.40/M、输出 $4.40/M；智谱旗舰模型，支持 1M 上下文。无缓存创建成本。请以官方价格页为准。'
+      }
+    ];
+
+    // 图表模型样式配置：颜色 + 线型
+    const modelStyles = [
+      { color: '#3b82f6', dasharray: 'none', width: 4 },      // 蓝色实线
+      { color: '#f97316', dasharray: '8 4', width: 3 },        // 橙色虚线
+      { color: '#22c55e', dasharray: '4 4', width: 3 },        // 绿色点线
+      { color: '#ef4444', dasharray: '12 4 4 4', width: 3 },   // 红色点划线
+      { color: '#a855f7', dasharray: '3 3', width: 3 },        // 紫色点线
+      { color: '#06b6d4', dasharray: '6 2 2 2', width: 3 },    // 青色点划线
+      { color: '#ec4899', dasharray: '10 3', width: 3 },        // 粉色虚线
+      { color: '#84cc16', dasharray: '2 2', width: 3 },        // 黄绿色点线
+      { color: '#f59e0b', dasharray: '8 2 4 2', width: 3 },    // 琥珀色点划线
+    ];
+
+    // 模型选择器状态：记录哪些模型是可见的
+    let visibleModels = new Set();
+
+    function getModelStyle(index) {
+      return modelStyles[index % modelStyles.length];
+    }
+
+    function initModelSelector() {
+      // 从 localStorage 加载可见模型
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        if (saved.visibleModels && Array.isArray(saved.visibleModels)) {
+          visibleModels = new Set(saved.visibleModels);
+        }
+      } catch (_) {}
+
+      // 确保至少有默认模型
+      const defaultModel = $('pricingPreset').value;
+      visibleModels.add(defaultModel);
+
+      renderModelSelector();
+    }
+
+    function renderModelSelector() {
+      const container = $('modelSelector');
+      const defaultModel = $('pricingPreset').value;
+      container.innerHTML = '';
+
+      // 只显示有价格数据的预设模型（排除 custom）
+      const modelsWithPrices = pricingPresets.filter((p) => p.id !== 'custom');
+
+      modelsWithPrices.forEach((preset, index) => {
+        const style = getModelStyle(index);
+        const isDefault = preset.id === defaultModel;
+        const isChecked = visibleModels.has(preset.id);
+
+        const label = document.createElement('label');
+        label.className = `model-selector-label${isDefault ? ' disabled' : ''}`;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = isChecked;
+        checkbox.disabled = isDefault;
+        checkbox.dataset.modelId = preset.id;
+
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            visibleModels.add(preset.id);
+          } else {
+            visibleModels.delete(preset.id);
+          }
+          saveVisibleModels();
+          update();
+        });
+
+        const colorIndicator = document.createElement('span');
+        colorIndicator.className = 'model-color-indicator';
+        colorIndicator.style.backgroundColor = style.color;
+        if (style.dasharray !== 'none') {
+          colorIndicator.style.background = `repeating-linear-gradient(90deg, ${style.color} 0px, ${style.color} 4px, transparent 4px, transparent 8px)`;
+        }
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'model-name';
+        nameSpan.textContent = preset.name;
+
+        label.appendChild(checkbox);
+        label.appendChild(colorIndicator);
+        label.appendChild(nameSpan);
+        container.appendChild(label);
+      });
+    }
+
+    function saveVisibleModels() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        saved.visibleModels = Array.from(visibleModels);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      } catch (_) {}
+    }
+
+    const $ = (id) => document.getElementById(id);
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function readNumber(id) {
+      const value = Number($(id).value);
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    }
+
+    function applyPricingPreset(presetId) {
+      const preset = pricingPresets.find((item) => item.id === presetId);
+      if (!preset || preset.id === 'custom') {
+        $('presetHint').textContent = preset?.note || '自定义价格不会被预设覆盖。';
+        return;
+      }
+
+      $('priceNew').value = preset.priceNew;
+      $('priceOut').value = preset.priceOut;
+      $('priceHit').value = preset.priceHit;
+      $('priceCreate').value = preset.priceCreate;
+      $('presetHint').textContent = preset.note;
+    }
+
+    function initPricingPresets() {
+      $('pricingPreset').innerHTML = pricingPresets
+        .map((preset) => `<option value="${preset.id}">${preset.name}</option>`)
+        .join('');
+      $('pricingPreset').value = 'gpt55';
+      applyPricingPreset('gpt55');
+    }
+
+    function readInputs() {
+      const data = {
+        priceNew: readNumber('priceNew'),
+        priceOut: readNumber('priceOut'),
+        priceHit: readNumber('priceHit'),
+        priceCreate: readNumber('priceCreate'),
+        tokensNew: readNumber('tokensNew'),
+        tokensOut: readNumber('tokensOut'),
+        tokensHit: readNumber('tokensHit'),
+        tokensCreate: readNumber('tokensCreate'),
+        multiplier: readNumber('multiplier') || 1
+      };
+
+      data.totalInputTokens = data.tokensNew + data.tokensHit + data.tokensCreate;
+      data.nonHitTokens = data.tokensNew + data.tokensCreate;
+      data.nonHitNewShare = data.nonHitTokens > 0 ? data.tokensNew / data.nonHitTokens : 1;
+      data.currentRate = data.totalInputTokens > 0 ? data.tokensHit / data.totalInputTokens : 0;
+      return data;
+    }
+
+    function calculateCostAtRate(rate, data) {
+      const hitTokens = data.totalInputTokens * rate;
+      const nonHitTokens = data.totalInputTokens - hitTokens;
+      const newTokens = nonHitTokens * data.nonHitNewShare;
+      const createTokens = nonHitTokens - newTokens;
+      const newCost = data.priceNew * newTokens;
+      const outCost = data.priceOut * data.tokensOut;
+      const hitCost = data.priceHit * hitTokens;
+      const createCost = data.priceCreate * createTokens;
+
+      return {
+        rate,
+        newTokens,
+        hitTokens,
+        createTokens,
+        newCost: newCost / MILLION * data.multiplier,
+        outCost: outCost / MILLION * data.multiplier,
+        hitCost: hitCost / MILLION * data.multiplier,
+        createCost: createCost / MILLION * data.multiplier,
+        total: (newCost + outCost + hitCost + createCost) / MILLION * data.multiplier
+      };
+    }
+
+    function buildSeries(data) {
+      const rates = new Set([0, 1, Number(data.currentRate.toFixed(6))]);
+      for (let pct = 0; pct <= 100; pct += 1) {
+        rates.add(Number((pct / 100).toFixed(6)));
+      }
+      rates.add(1);
+
+      return [...rates]
+        .sort((a, b) => a - b)
+        .map((rate) => calculateCostAtRate(rate, data));
+    }
+
+    function formatMoney(value) {
+      if (!Number.isFinite(value)) return '$0.00';
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    }
+
+    function formatToken(value) {
+      return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 0 }).format(value);
+    }
+
+    function formatPercent(rate) {
+      return `${(rate * 100).toFixed(rate === 0 || rate === 1 ? 0 : 1)}%`;
+    }
+
+    function renderSummary(data) {
+      const current = calculateCostAtRate(data.currentRate, data);
+      const zero = calculateCostAtRate(0, data);
+      const full = calculateCostAtRate(1, data);
+      const delta = (data.priceNew * data.nonHitNewShare + data.priceCreate * (1 - data.nonHitNewShare) - data.priceHit) * data.totalInputTokens * 0.1 / MILLION;
+      const saved = zero.total - full.total;
+
+      $('currentCost').textContent = formatMoney(current.total);
+      $('currentRateText').textContent = `当前命中率 ${formatPercent(data.currentRate)}，总输入 tokens ${formatToken(data.totalInputTokens)}`;
+      $('zeroCost').textContent = formatMoney(zero.total);
+      $('fullCost').textContent = formatMoney(full.total);
+      $('deltaCost').textContent = `${delta >= 0 ? '+' : ''}${formatMoney(delta)}`;
+      $('deltaText').textContent = delta >= 0
+        ? '命中率每降低 10 个百分点的额外成本'
+        : '命中率降低时成本反而下降，因为创建价低于命中价';
+
+      const direction = saved >= 0 ? '最多可节省' : '100% 命中反而增加';
+      $('chartStatus').textContent = `${direction} ${formatMoney(Math.abs(saved))}；当前点 ${formatMoney(current.total)}`;
+
+      const warnings = [];
+      if (data.totalInputTokens === 0) warnings.push('没有输入 token，命中率不会影响总成本。');
+      if (data.priceCreate < data.priceHit) warnings.push('缓存创建成本低于命中成本，因此曲线会随命中率上升而上升。');
+      $('inlineWarning').innerHTML = warnings.length ? ` <span class="warning">${warnings.join(' ')}</span>` : '';
+    }
+
+    function scaleLinear(domainMin, domainMax, rangeMin, rangeMax) {
+      if (domainMax === domainMin) {
+        return () => (rangeMin + rangeMax) / 2;
+      }
+      return (value) => rangeMin + (value - domainMin) * (rangeMax - rangeMin) / (domainMax - domainMin);
+    }
+
+    function makeSvgEl(name, attrs = {}) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+      return el;
+    }
+
+    function renderChart(series, data) {
+      const svg = $('chart');
+      svg.innerHTML = '';
+
+      const { width, height } = chartSize;
+      const innerW = width - margin.left - margin.right;
+      const innerH = height - margin.top - margin.bottom;
+
+      // 计算所有可见模型的全局 Y 轴范围
+      let globalMinCost = Infinity;
+      let globalMaxCost = -Infinity;
+
+      const modelsWithPrices = pricingPresets.filter((p) => p.id !== 'custom');
+      const visibleModelsData = [];
+
+      modelsWithPrices.forEach((preset, index) => {
+        if (!visibleModels.has(preset.id)) return;
+
+        const modelData = {
+          ...data,
+          priceNew: preset.priceNew || data.priceNew,
+          priceOut: preset.priceOut || data.priceOut,
+          priceHit: preset.priceHit || data.priceHit,
+          priceCreate: preset.priceCreate || data.priceCreate,
+        };
+        const modelSeries = buildSeries(modelData);
+
+        modelSeries.forEach((point) => {
+          globalMinCost = Math.min(globalMinCost, point.total);
+          globalMaxCost = Math.max(globalMaxCost, point.total);
+        });
+
+        visibleModelsData.push({
+          id: preset.id,
+          name: preset.name,
+          series: modelSeries,
+          style: getModelStyle(index),
+          isDefault: preset.id === $('pricingPreset').value
+        });
+      });
+
+      const pad = Math.max((globalMaxCost - globalMinCost) * 0.12, globalMaxCost === 0 ? 1 : globalMaxCost * 0.04);
+      const yMin = Math.max(0, globalMinCost - pad);
+      const yMax = globalMaxCost + pad;
+      const x = scaleLinear(0, 1, margin.left, margin.left + innerW);
+      const y = scaleLinear(yMin, yMax, margin.top + innerH, margin.top);
+
+      const defs = makeSvgEl('defs');
+      svg.appendChild(defs);
+
+      const plot = makeSvgEl('g');
+      svg.appendChild(plot);
+
+      // 绘制网格线和坐标轴
+      for (let i = 0; i <= 5; i += 1) {
+        const rate = i / 5;
+        const xPos = x(rate);
+        plot.appendChild(makeSvgEl('line', {
+          x1: xPos, y1: margin.top, x2: xPos, y2: margin.top + innerH, class: 'grid-line'
+        }));
+        const label = makeSvgEl('text', {
+          x: xPos, y: height - 24, 'text-anchor': 'middle', class: 'tick-label'
+        });
+        label.textContent = `${rate * 100}%`;
+        plot.appendChild(label);
+      }
+
+      for (let i = 0; i <= 4; i += 1) {
+        const value = yMin + (yMax - yMin) * i / 4;
+        const yPos = y(value);
+        plot.appendChild(makeSvgEl('line', {
+          x1: margin.left, y1: yPos, x2: margin.left + innerW, y2: yPos, class: 'grid-line'
+        }));
+        const label = makeSvgEl('text', {
+          x: margin.left - 12, y: yPos + 4, 'text-anchor': 'end', class: 'tick-label'
+        });
+        label.textContent = formatMoney(value);
+        plot.appendChild(label);
+      }
+
+      plot.appendChild(makeSvgEl('line', {
+        x1: margin.left, y1: margin.top + innerH, x2: margin.left + innerW, y2: margin.top + innerH, class: 'axis-line'
+      }));
+      plot.appendChild(makeSvgEl('line', {
+        x1: margin.left, y1: margin.top, x2: margin.left, y2: margin.top + innerH, class: 'axis-line'
+      }));
+
+      const xLabel = makeSvgEl('text', {
+        x: margin.left + innerW / 2, y: height - 8, 'text-anchor': 'middle', class: 'axis-label'
+      });
+      xLabel.textContent = '缓存命中率';
+      plot.appendChild(xLabel);
+
+      const yLabel = makeSvgEl('text', {
+        x: 18, y: margin.top + innerH / 2, 'text-anchor': 'middle', class: 'axis-label', transform: `rotate(-90 18 ${margin.top + innerH / 2})`
+      });
+      yLabel.textContent = '总成本（USD）';
+      plot.appendChild(yLabel);
+
+      // 绘制每个可见模型的折线
+      visibleModelsData.forEach((model) => {
+        const linePoints = model.series.map((point) => `${x(point.rate)},${y(point.total)}`).join(' ');
+
+        // 为默认模型添加面积填充
+        if (model.isDefault) {
+          const areaPoints = `${margin.left},${margin.top + innerH} ${linePoints} ${margin.left + innerW},${margin.top + innerH}`;
+          const areaGradientId = `areaGradient-${model.id}`;
+          const gradient = makeSvgEl('linearGradient', { id: areaGradientId, x1: '0', y1: '0', x2: '0', y2: '1' });
+          gradient.appendChild(makeSvgEl('stop', { offset: '0%', 'stop-color': model.style.color, 'stop-opacity': '0.20' }));
+          gradient.appendChild(makeSvgEl('stop', { offset: '100%', 'stop-color': model.style.color, 'stop-opacity': '0.00' }));
+          defs.appendChild(gradient);
+          plot.appendChild(makeSvgEl('polygon', { points: areaPoints, fill: `url(#${areaGradientId})` }));
+        }
+
+        const lineAttrs = {
+          points: linePoints,
+          fill: 'none',
+          stroke: model.style.color,
+          'stroke-width': model.style.width,
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+        };
+        if (model.style.dasharray !== 'none') {
+          lineAttrs['stroke-dasharray'] = model.style.dasharray;
+        }
+        plot.appendChild(makeSvgEl('polyline', lineAttrs));
+      });
+
+      // 当前命中率指示线（只对默认模型）
+      const defaultModel = visibleModelsData.find((m) => m.isDefault);
+      if (defaultModel) {
+        const current = calculateCostAtRate(data.currentRate, { ...data, ...defaultModel.series.find((p) => Math.abs(p.rate - data.currentRate) < 0.01) || {} });
+        const currentPoint = defaultModel.series.reduce((best, point) => {
+          return Math.abs(point.rate - data.currentRate) < Math.abs(best.rate - data.currentRate) ? point : best;
+        }, defaultModel.series[0]);
+        const currentX = x(data.currentRate);
+        const currentY = y(currentPoint.total);
+        plot.appendChild(makeSvgEl('line', {
+          x1: currentX, y1: margin.top, x2: currentX, y2: margin.top + innerH, class: 'current-line'
+        }));
+        plot.appendChild(makeSvgEl('circle', {
+          cx: currentX, cy: currentY, r: 7, class: 'current-dot'
+        }));
+      }
+
+      // 悬浮点和交互层
+      const hoverDots = visibleModelsData.map((model) => {
+        const dot = makeSvgEl('circle', {
+          cx: -100, cy: -100, r: 6,
+          fill: model.style.color,
+          stroke: '#ffffff',
+          'stroke-width': 3
+        });
+        plot.appendChild(dot);
+        return { dot, model };
+      });
+
+      const hoverRect = makeSvgEl('rect', {
+        x: margin.left, y: margin.top, width: innerW, height: innerH, fill: 'transparent', class: 'hover-layer'
+      });
+      plot.appendChild(hoverRect);
+
+      const tooltip = $('tooltip');
+      const chartWrap = svg.parentElement;
+
+      function showPoint(clientX) {
+        const rect = svg.getBoundingClientRect();
+        const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
+        const svgX = ratio * width;
+        const rate = clamp((svgX - margin.left) / innerW, 0, 1);
+
+        // 找到最近的数据点
+        const nearestRate = visibleModelsData[0]?.series.reduce((best, point) => {
+          return Math.abs(point.rate - rate) < Math.abs(best.rate - rate) ? point.rate : best;
+        }, visibleModelsData[0].series[0].rate) || rate;
+
+        // 更新每个模型的悬浮点
+        hoverDots.forEach(({ dot, model }) => {
+          const nearest = model.series.reduce((best, point) => {
+            return Math.abs(point.rate - nearestRate) < Math.abs(best.rate - nearestRate) ? point : best;
+          }, model.series[0]);
+          const dotX = x(nearest.rate);
+          const dotY = y(nearest.total);
+          dot.setAttribute('cx', dotX);
+          dot.setAttribute('cy', dotY);
+        });
+
+        const wrapRect = chartWrap.getBoundingClientRect();
+        const firstDot = hoverDots[0];
+        if (!firstDot) return;
+
+        const dotX = parseFloat(firstDot.dot.getAttribute('cx'));
+        const dotY = parseFloat(firstDot.dot.getAttribute('cy'));
+        const screenX = rect.left + dotX / width * rect.width - wrapRect.left;
+        const screenY = rect.top + dotY / height * rect.height - wrapRect.top;
+        tooltip.style.left = `${screenX}px`;
+        tooltip.style.top = `${screenY}px`;
+        tooltip.style.opacity = '1';
+
+        // 生成 tooltip 内容
+        let tooltipHtml = `<strong>${formatPercent(nearestRate)}</strong><br><br>`;
+        visibleModelsData.forEach((model) => {
+          const nearest = model.series.reduce((best, point) => {
+            return Math.abs(point.rate - nearestRate) < Math.abs(best.rate - nearestRate) ? point : best;
+          }, model.series[0]);
+          tooltipHtml += `<span style="color:${model.style.color}">●</span> ${model.name}: <strong>${formatMoney(nearest.total)}</strong><br>`;
+        });
+        tooltip.innerHTML = tooltipHtml;
+      }
+
+      hoverRect.addEventListener('mousemove', (event) => showPoint(event.clientX));
+      hoverRect.addEventListener('mouseenter', (event) => showPoint(event.clientX));
+      hoverRect.addEventListener('mouseleave', () => {
+        tooltip.style.opacity = '0';
+        hoverDots.forEach(({ dot }) => {
+          dot.setAttribute('cx', -100);
+          dot.setAttribute('cy', -100);
+        });
+      });
+    }
+
+    const tokenFields = ['tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate'];
+
+    function saveToStorage() {
+      const data = {};
+      tokenFields.forEach((id) => { data[id] = $(id).value; });
+      data.multiplier = $('multiplier').value;
+      data.pricingPreset = $('pricingPreset').value;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+    }
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return JSON.parse('{}');
+        return JSON.parse(raw);
+      } catch (_) { return {}; }
+    }
+
+    function update() {
+      const data = readInputs();
+      const series = buildSeries(data);
+      renderSummary(data);
+      renderChart(series, data);
+      saveToStorage();
+    }
+
+    fields.forEach((id) => $(id).addEventListener('input', () => {
+      if (id === 'pricingPreset') {
+        applyPricingPreset($('pricingPreset').value);
+        // 切换预设时，确保新预设成为默认模型且可见
+        const newPreset = $('pricingPreset').value;
+        visibleModels.add(newPreset);
+        renderModelSelector();
+      }
+      update();
+    }));
+    const saved = loadFromStorage();
+    initPricingPresets();
+    if (saved.pricingPreset && pricingPresets.find((p) => p.id === saved.pricingPreset)) {
+      $('pricingPreset').value = saved.pricingPreset;
+      applyPricingPreset(saved.pricingPreset);
+    }
+    tokenFields.forEach((id) => {
+      if (saved[id] !== undefined && saved[id] !== '') $(id).value = saved[id];
+    });
+    if (saved.multiplier !== undefined && saved.multiplier !== '') $('multiplier').value = saved.multiplier;
+
+    // 生成定价表格
+    function renderPricingTable() {
+      const tbody = document.getElementById('pricingTableBody');
+      const models = pricingPresets.filter((p) => p.id !== 'custom');
+
+      tbody.innerHTML = models.map((preset) => {
+        const formatPrice = (val) => val === 0 ? '<span class="price-zero">$0</span>' : `$${val.toFixed(val < 0.01 ? 4 : 2)}`;
+        return `
+          <tr>
+            <td>${preset.name}</td>
+            <td>${formatPrice(preset.priceNew)}</td>
+            <td>${formatPrice(preset.priceOut)}</td>
+            <td>${formatPrice(preset.priceHit)}</td>
+            <td>${formatPrice(preset.priceCreate)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    renderPricingTable();
+    initModelSelector();
+    update();
+  </script>
+</body>
+</html>
