@@ -908,76 +908,24 @@
       'tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate', 'multiplier', 'pricingPreset'
     ];
 
-    const pricingPresets = [
-      {
-        id: 'custom',
-        name: '自定义 / 手动输入',
-        note: '不会覆盖当前输入框，适合填写你的实际账单价格。'
-      },
-      {
-        id: 'gpt55',
-        name: 'GPT-5.5',
-        priceNew: 5,
-        priceOut: 30,
-        priceHit: 0.5,
-        priceCreate: 0,
-        note: '按你提供的价格预填。无缓存创建成本。'
-      },
-      {
-        id: 'claude-opus-48',
-        name: 'Claude Opus 4.8',
-        priceNew: 5,
-        priceOut: 25,
-        priceHit: 0.5,
-        priceCreate: 6.25,
-        note: '参考价：输入 $5/M、输出 $25/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。'
-      },
-      {
-        id: 'claude-sonnet-46',
-        name: 'Claude Sonnet 4.6',
-        priceNew: 3,
-        priceOut: 15,
-        priceHit: 0.3,
-        priceCreate: 3.75,
-        note: '参考价：输入 $3/M、输出 $15/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。'
-      },
-      {
-        id: 'claude-fable-5',
-        name: 'Claude Fable 5',
-        priceNew: 10,
-        priceOut: 50,
-        priceHit: 1,
-        priceCreate: 12.5,
-        note: '参考价：输入 $10/M、输出 $50/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。'
-      },
-      {
-        id: 'deepseek-v4-pro',
-        name: 'DeepSeek V4 Pro',
-        priceNew: 1.74,
-        priceOut: 3.48,
-        priceHit: 0.0145,
-        priceCreate: 0,
-        note: '参考价：输入 $1.74/M、输出 $3.48/M；缓存命中约输入价的 8%。无缓存创建成本。'
-      },
-      {
-        id: 'deepseek-v4-flash',
-        name: 'DeepSeek V4 Flash',
-        priceNew: 0.14,
-        priceOut: 0.28,
-        priceHit: 0.0028,
-        priceCreate: 0,
-        note: '参考价：输入 $0.14/M、输出 $0.28/M；缓存命中约输入价的 2%。无缓存创建成本。性价比极高。'
-      },
-      {
-        id: 'glm-52',
-        name: 'GLM-5.2',
-        priceNew: 1.4,
-        priceOut: 4.4,
-        priceHit: 0.26,
-        priceCreate: 0,
-        note: '参考价：输入 $1.40/M、输出 $4.40/M；智谱旗舰模型，支持 1M 上下文。无缓存创建成本。请以官方价格页为准。'
+    let pricingPresets = [];
+
+    async function loadPricingPresets() {
+      try {
+        const response = await fetch('model-presets.json');
+        if (!response.ok) throw new Error('Failed to load presets');
+        pricingPresets = await response.json();
+      } catch (error) {
+        console.error('加载模型预设失败:', error);
+        pricingPresets = [
+          {
+            id: 'custom',
+            name: '自定义 / 手动输入',
+            note: '不会覆盖当前输入框，适合填写你的实际账单价格。'
+          }
+        ];
       }
-    ];
+    }
 
     // 图表模型样式配置：颜色 + 线型
     const modelStyles = [
@@ -1474,16 +1422,6 @@
       }
       update();
     }));
-    const saved = loadFromStorage();
-    initPricingPresets();
-    if (saved.pricingPreset && pricingPresets.find((p) => p.id === saved.pricingPreset)) {
-      $('pricingPreset').value = saved.pricingPreset;
-      applyPricingPreset(saved.pricingPreset);
-    }
-    tokenFields.forEach((id) => {
-      if (saved[id] !== undefined && saved[id] !== '') $(id).value = saved[id];
-    });
-    if (saved.multiplier !== undefined && saved.multiplier !== '') $('multiplier').value = saved.multiplier;
 
     // 生成定价表格
     function renderPricingTable() {
@@ -1504,9 +1442,27 @@
       }).join('');
     }
 
-    renderPricingTable();
-    initModelSelector();
-    update();
+    // 异步初始化
+    async function init() {
+      await loadPricingPresets();
+
+      const saved = loadFromStorage();
+      initPricingPresets();
+      if (saved.pricingPreset && pricingPresets.find((p) => p.id === saved.pricingPreset)) {
+        $('pricingPreset').value = saved.pricingPreset;
+        applyPricingPreset(saved.pricingPreset);
+      }
+      tokenFields.forEach((id) => {
+        if (saved[id] !== undefined && saved[id] !== '') $(id).value = saved[id];
+      });
+      if (saved.multiplier !== undefined && saved.multiplier !== '') $('multiplier').value = saved.multiplier;
+
+      renderPricingTable();
+      initModelSelector();
+      update();
+    }
+
+    init();
   </script>
 </body>
 </html>
