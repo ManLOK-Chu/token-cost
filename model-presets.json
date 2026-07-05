@@ -43,11 +43,11 @@
   {
     "id": "deepseek-v4-pro",
     "name": "DeepSeek V4 Pro",
-    "priceNew": 1.74,
-    "priceOut": 3.48,
-    "priceHit": 0.0145,
+    "priceNew": 0.435,
+    "priceOut": 0.87,
+    "priceHit": 0.003625,
     "priceCreate": 0,
-    "note": "参考价：输入 $1.74/M、输出 $3.48/M；缓存命中约输入价的 8%。无缓存创建成本。"
+    "note": "参考价：输入 $0.435/M、输出 $0.87/M；缓存命中约输入价的 0.8%。无缓存创建成本。请以官方价格页为准。"
   },
   {
     "id": "deepseek-v4-flash",
@@ -70,19 +70,46 @@
   {
     "id": "mimo-v25",
     "name": "MiMo V2.5",
-    "priceNew": 0.16,
-    "priceOut": 4,
-    "priceHit": 0.08,
+    "priceNew": 0.14,
+    "priceOut": 0.28,
+    "priceHit": 0.0028,
     "priceCreate": 0,
-    "note": "参考价：输入 $0.16/M、输出 $4/M；小米推理模型，缓存命中按输入 50%。无缓存创建成本。请以官方价格页为准。"
+    "note": "参考价：输入 $0.14/M、输出 $0.28/M；缓存命中约输入价的 2%。无缓存创建成本。请以官方价格页为准。"
   },
   {
     "id": "mimo-v25-pro",
     "name": "MiMo V2.5 Pro",
-    "priceNew": 0.4,
-    "priceOut": 6,
+    "priceNew": 0.435,
+    "priceOut": 0.87,
+    "priceHit": 0.0036,
+    "priceCreate": 0,
+    "note": "参考价：输入 $0.435/M、输出 $0.87/M；缓存命中约输入价的 0.8%。无缓存创建成本。请以官方价格页为准。"
+  },
+  {
+    "id": "cursor-composer-25",
+    "name": "Cursor Composer 2.5",
+    "priceNew": 0.5,
+    "priceOut": 2.5,
     "priceHit": 0.2,
     "priceCreate": 0,
-    "note": "参考价：输入 $0.40/M、输出 $6/M；小米推理模型 Pro 版，缓存命中按输入 50%。无缓存创建成本。请以官方价格页为准。"
+    "note": "参考价：输入 $0.5/M、输出 $2.5/M；缓存读取 $0.2/M。无缓存创建成本。请以官方价格页为准。"
+  },
+  {
+    "id": "cursor-composer-25-fast",
+    "name": "Cursor Composer 2.5 (Fast)",
+    "priceNew": 3,
+    "priceOut": 15,
+    "priceHit": 0.5,
+    "priceCreate": 0,
+    "note": "参考价：输入 $3/M、输出 $15/M；缓存读取 $0.5/M。无缓存创建成本。请以官方价格页为准。"
+  },
+  {
+    "id": "claude-sonnet-5",
+    "name": "Claude Sonnet 5",
+    "priceNew": 3,
+    "priceOut": 15,
+    "priceHit": 0.3,
+    "priceCreate": 3.75,
+    "note": "参考价：输入 $3/M、输出 $15/M；缓存读取 $0.3/M、缓存写入 $3.75/M。请以官方价格页为准。"
   }
 ]
