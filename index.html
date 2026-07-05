@@ -1431,7 +1431,12 @@
         .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
 
       tbody.innerHTML = models.map((preset) => {
-        const formatPrice = (val) => val === 0 ? '<span class="price-zero">$0</span>' : `$${val.toFixed(val < 0.01 ? 4 : 2)}`;
+        const formatPrice = (val) => {
+          if (val === 0) return '<span class="price-zero">$0</span>';
+          // 显示原始精度，避免四舍五入
+          const str = String(val);
+          return `$${str}`;
+        };
         return `
           <tr>
             <td>${preset.name}</td>
