@@ -703,6 +703,264 @@
         margin-left: 0;
       }
     }
+    /* models.dev 真实模型浏览器 */
+    .preset-head {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .preset-head label {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .md-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--primary-dark);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 11px 15px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease, color .15s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .md-btn:hover { border-color: var(--primary); background: rgba(59, 130, 246, .06); }
+    .md-btn:disabled { opacity: .65; cursor: progress; }
+    .md-btn .md-dot { color: var(--green); margin-right: 7px; font-size: 11px; vertical-align: middle; }
+
+    .md-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 24, 40, .36);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      z-index: 50;
+    }
+    .md-overlay.open { display: flex; }
+    .md-modal {
+      width: min(860px, 100%);
+      max-height: min(82vh, 720px);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .98) 0%, var(--panel) 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 24px 70px rgba(16, 24, 40, .18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    :root.dark-mode .md-modal {
+      background: linear-gradient(180deg, rgba(31, 34, 42, .98) 0%, var(--panel) 100%);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .42);
+    }
+    .md-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px 24px 16px;
+      border-bottom: 1px solid var(--soft-line);
+    }
+    .md-titleline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .md-ledger-mark {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(59, 130, 246, .22);
+      border-radius: 12px;
+      background:
+        linear-gradient(135deg, rgba(59, 130, 246, .16), rgba(18, 183, 106, .12)),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      color: var(--primary-dark);
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -.04em;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6);
+    }
+    .md-head h3 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: -0.035em;
+    }
+    .md-head .md-sub {
+      max-width: 660px;
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .md-close {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 24px;
+      line-height: 1;
+      color: var(--muted);
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
+    }
+    .md-close:hover { background: var(--soft-line); border-color: var(--line); color: var(--text); }
+    .md-search {
+      margin: 18px 24px 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      font: inherit;
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--text);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45);
+    }
+    .md-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, .14); }
+    .md-status {
+      padding: 0 24px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 18px;
+    }
+    .md-list {
+      overflow-y: auto;
+      padding: 0 18px 18px;
+      flex: 1;
+      scrollbar-gutter: stable;
+    }
+    .md-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 15px 14px 18px;
+      border-radius: 18px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, .52);
+      transition: background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+    :root.dark-mode .md-row { background: rgba(255, 255, 255, .02); }
+    .md-row::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 13px;
+      bottom: 13px;
+      width: 3px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--primary), var(--green));
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+    .md-row + .md-row { margin-top: 6px; }
+    .md-row:hover,
+    .md-row:focus-visible {
+      background: var(--panel);
+      border-color: var(--line);
+      box-shadow: 0 12px 28px rgba(16, 24, 40, .07);
+      transform: translateY(-1px);
+      outline: none;
+    }
+    .md-row:hover::before,
+    .md-row:focus-visible::before { opacity: 1; }
+    .md-main { min-width: 0; }
+    .md-name {
+      overflow: hidden;
+      color: var(--text);
+      font-weight: 650;
+      font-size: 14px;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .md-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .md-prov {
+      display: inline-flex;
+      align-items: center;
+      max-width: 160px;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--bg);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .md-cache-tag { color: var(--green); }
+    .md-price {
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      gap: 6px;
+      color: var(--muted);
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 11px;
+      line-height: 1;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .md-price span {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 8px 9px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--bg);
+    }
+    .md-price b { color: var(--text); font-weight: 700; font-size: 12px; }
+    .md-empty {
+      margin: 8px 6px 0;
+      padding: 34px 20px;
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--bg);
+      font-size: 14px;
+    }
+
+    @media (max-width: 620px) {
+      .md-overlay { padding: 12px; }
+      .md-modal { max-height: 88vh; }
+      .md-head { padding: 18px 18px 14px; }
+      .md-head h3 { font-size: 19px; }
+      .md-search { margin: 14px 18px 8px; }
+      .md-status { padding: 0 18px 8px; }
+      .md-list { padding: 0 12px 14px; }
+      .md-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .md-price {
+        justify-self: start;
+        text-align: left;
+      }
+    }
   </style>
 </head>
 <body>
@@ -725,9 +983,12 @@
             </div>
           </div>
           <div class="preset-row">
-            <label>模型定价预设
-              <select id="pricingPreset"></select>
-            </label>
+            <div class="preset-head">
+              <label>模型定价预设
+                <select id="pricingPreset"></select>
+              </label>
+              <button type="button" id="loadModelsDev" class="md-btn"><span class="md-dot">●</span>浏览 models.dev 模型</button>
+            </div>
             <p id="presetHint" class="preset-hint">预设仅用于快速填充，实际价格请以你的供应商账单或官方价格页为准。</p>
           </div>
           <div class="inputs">
@@ -847,6 +1108,24 @@
   </div>
 
   <button class="theme-toggle" id="themeToggle" title="切换深色/浅色模式">🌙</button>
+
+  <div class="md-overlay" id="mdOverlay" role="dialog" aria-modal="true" aria-label="浏览 models.dev 真实模型">
+    <div class="md-modal">
+      <div class="md-head">
+        <div>
+          <div class="md-titleline">
+            <span class="md-ledger-mark">$/M</span>
+            <h3>models.dev 价格目录</h3>
+          </div>
+          <p class="md-sub">按需拉取当前模型价格，选中后填充到上方定价。仅本次会话有效，不会修改本地预设。</p>
+        </div>
+        <button type="button" class="md-close" id="mdClose" aria-label="关闭">×</button>
+      </div>
+      <input type="text" class="md-search" id="mdSearch" placeholder="搜索模型名称或厂商，例如 gpt、claude、gemini、deepseek…" autocomplete="off">
+      <div class="md-status" id="mdStatus"></div>
+      <div class="md-list" id="mdList"></div>
+    </div>
+  </div>
 
   <script>
     // 主题切换逻辑
@@ -1052,6 +1331,161 @@
         .join('');
       $('pricingPreset').value = 'gpt55';
       applyPricingPreset('gpt55');
+    }
+
+    // ----- models.dev 真实模型浏览器：按需联网拉取，仅加入内存中的 pricingPresets，不写预设文件 -----
+    const PROVIDER_LABELS = {
+      openai: 'OpenAI', anthropic: 'Anthropic', google: 'Google', xai: 'xAI',
+      deepseek: 'DeepSeek', zhipuai: 'Zhipu', mistral: 'Mistral', llama: 'Llama',
+      alibaba: 'Qwen', xiaomi: 'Xiaomi', moonshotai: 'Kimi', meta: 'Meta',
+      cohere: 'Cohere', perplexity: 'Perplexity', groq: 'Groq', togetherai: 'Together'
+    };
+    const provLabel = (p) => PROVIDER_LABELS[p] || p;
+
+    let mdCatalogPromise = null;
+    let mdCatalogList = [];
+
+    const fmtUsd = (v) => (v >= 1 ? v.toFixed(2) : v.toFixed(v < 0.01 ? 4 : 3));
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (ch) => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+      ));
+    }
+
+    function loadModelsDevCatalog() {
+      if (mdCatalogPromise) return mdCatalogPromise;
+      mdCatalogPromise = (async () => {
+        try {
+          const res = await fetch('https://models.dev/catalog.json', { cache: 'no-cache' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const catalog = await res.json();
+          mdCatalogList = buildCatalogList(catalog);
+        } catch (e) {
+          mdCatalogPromise = null;
+          throw e;
+        }
+      })();
+      return mdCatalogPromise;
+    }
+
+    function buildCatalogList(catalog) {
+      const list = [];
+      const providers = (catalog && catalog.providers) || {};
+      for (const prov of Object.keys(providers)) {
+        const models = (providers[prov] && providers[prov].models) || {};
+        for (const mid of Object.keys(models)) {
+          const m = models[mid];
+          const c = m && m.cost;
+          if (!c || c.input == null || c.output == null) continue;
+          const name = m.name || mid;
+          const id = 'md-' + (prov + '-' + mid).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          list.push({
+            id,
+            provider: prov,
+            label: provLabel(prov),
+            name,
+            priceNew: c.input,
+            priceOut: c.output,
+            priceHit: c.cache_read || 0,
+            priceCreate: c.cache_write || 0,
+            note: '来自 models.dev（' + provLabel(prov) + '），为基础费率，可能存在分档/上下文溢价，以官方账单为准。',
+            search: (prov + ' ' + name + ' ' + mid + ' ' + (m.family || '')).toLowerCase()
+          });
+        }
+      }
+      list.sort((a, b) => a.label.localeCompare(b.label, 'en') || a.name.localeCompare(b.name, 'en'));
+      return list;
+    }
+
+    function showCatalogReady() {
+      $('mdStatus').textContent = '共 ' + mdCatalogList.length + ' 个带价格的模型，输入名称或厂商筛选。';
+      renderCatalogResults('');
+      $('mdSearch').focus();
+    }
+
+    function openModelsDevModal() {
+      $('mdOverlay').classList.add('open');
+      if (mdCatalogList.length) {
+        showCatalogReady();
+        return;
+      }
+      if (mdCatalogPromise) return;
+      const btn = $('loadModelsDev');
+      btn.disabled = true;
+      btn.textContent = '加载中…';
+      $('mdStatus').textContent = '正在从 models.dev 拉取最新模型与价格…';
+      loadModelsDevCatalog().then(() => {
+        showCatalogReady();
+      }).catch((err) => {
+        $('mdStatus').textContent = '加载失败：' + err.message + '（可能是网络或跨域限制，请稍后重试）。';
+      }).finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="md-dot">●</span>浏览 models.dev 模型';
+      });
+    }
+
+    function closeModelsDevModal() {
+      $('mdOverlay').classList.remove('open');
+      $('mdSearch').value = '';
+    }
+
+    function renderCatalogResults(query) {
+      const list = $('mdList');
+      const q = query.trim().toLowerCase();
+      const matches = q ? mdCatalogList.filter((m) => m.search.includes(q)) : mdCatalogList;
+      const shown = matches.slice(0, 300);
+      if (matches.length === 0) {
+        list.innerHTML = '<div class="md-empty">没有匹配 “' + escapeHtml(query) + '” 的模型。</div>';
+        return;
+      }
+      let status;
+      if (q) {
+        status = '匹配 ' + matches.length + ' 个';
+      } else {
+        status = '共 ' + matches.length + ' 个带价格的模型，输入名称或厂商筛选。';
+      }
+      if (matches.length > shown.length) status += '（显示前 ' + shown.length + ' 个，继续输入可缩小范围）';
+      $('mdStatus').textContent = status;
+      list.innerHTML = shown.map((m) => (
+        '<div class="md-row" data-id="' + m.id + '" role="option" tabindex="0">' +
+          '<div class="md-main"><div class="md-name">' + escapeHtml(m.label + ' · ' + m.name) + '</div>' +
+          '<div class="md-meta"><span class="md-prov">' + escapeHtml(m.provider) + '</span>' +
+          (m.priceCreate ? '<span class="md-cache-tag">含缓存写入价</span>' : '') + '</div></div>' +
+          '<div class="md-price"><span>in <b>$' + fmtUsd(m.priceNew) + '</b></span><span>out <b>$' + fmtUsd(m.priceOut) + '</b></span></div>' +
+        '</div>'
+      )).join('');
+    }
+
+    function registerRuntimePreset(item) {
+      if (!pricingPresets.some((p) => p.id === item.id)) {
+        pricingPresets.push({
+          id: item.id,
+          name: item.label + ' · ' + item.name,
+          priceNew: item.priceNew,
+          priceOut: item.priceOut,
+          priceHit: item.priceHit,
+          priceCreate: item.priceCreate,
+          note: item.note
+        });
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = item.label + ' · ' + item.name;
+        $('pricingPreset').appendChild(opt);
+      }
+      $('pricingPreset').value = item.id;
+      applyPricingPreset(item.id);
+      visibleModels.add(item.id);
+      renderModelSelector();
+      renderPricingTable();
+      update();
+    }
+
+    function selectModelsDevModel(id) {
+      const item = mdCatalogList.find((m) => m.id === id);
+      if (!item) return;
+      registerRuntimePreset(item);
+      closeModelsDevModal();
     }
 
     function readInputs() {
@@ -1466,7 +1900,40 @@
 
       renderPricingTable();
       initModelSelector();
+      setupModelsDevBrowser();
       update();
+    }
+
+    function setupModelsDevBrowser() {
+      $('loadModelsDev').addEventListener('click', openModelsDevModal);
+      $('mdClose').addEventListener('click', closeModelsDevModal);
+      $('mdOverlay').addEventListener('click', (e) => {
+        if (e.target === $('mdOverlay')) closeModelsDevModal();
+      });
+      let searchTimer = null;
+      $('mdSearch').addEventListener('input', (e) => {
+        clearTimeout(searchTimer);
+        const v = e.target.value;
+        searchTimer = setTimeout(() => renderCatalogResults(v), 120);
+      });
+      $('mdSearch').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const first = $('mdList').querySelector('.md-row');
+          if (first) selectModelsDevModel(first.getAttribute('data-id'));
+        }
+      });
+      $('mdList').addEventListener('click', (e) => {
+        const row = e.target.closest('.md-row');
+        if (row) selectModelsDevModel(row.getAttribute('data-id'));
+      });
+      $('mdList').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.classList.contains('md-row')) {
+          selectModelsDevModel(e.target.getAttribute('data-id'));
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && $('mdOverlay').classList.contains('open')) closeModelsDevModal();
+      });
     }
 
     init();
