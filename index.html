@@ -174,6 +174,8 @@
     import { $, clamp, escapeHtml } from './js/dom.js';
     import { MILLION, buildSeries, calculateCostAtRate, formatMoney, formatPercent, formatToken, readInputs } from './js/pricing.js';
     import { loadCalculatorState, loadTheme, saveCalculatorState, saveTheme } from './js/storage.js';
+    import { renderChart, renderSummary } from './js/chart.js';
+    import { applyPricingPreset, ensureModelVisible, findPricingPreset, getPricingPresets, getVisibleModels, initModelSelector, initPricingPresets, loadPricingPresets, registerRuntimePreset, renderModelSelector, renderPricingTable } from './js/presets.js';
     // 主题切换逻辑
     const themeToggle = document.getElementById('themeToggle');
 
@@ -229,142 +231,6 @@
       'priceNew', 'priceOut', 'priceHit', 'priceCreate',
       'tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate', 'multiplier', 'pricingPreset'
     ];
-
-    let pricingPresets = [];
-
-    async function loadPricingPresets() {
-      try {
-        const response = await fetch('model-presets.json');
-        if (!response.ok) throw new Error('Failed to load presets');
-        pricingPresets = await response.json();
-      } catch (error) {
-        console.error('加载模型预设失败:', error);
-        pricingPresets = [
-          {
-            id: 'custom',
-            name: '自定义 / 手动输入',
-            note: '不会覆盖当前输入框，适合填写你的实际账单价格。'
-          }
-        ];
-      }
-    }
-
-    // 图表模型样式配置：颜色 + 线型
-    const modelStyles = [
-      { color: '#3b82f6', dasharray: 'none', width: 4 },      // 蓝色实线
-      { color: '#f97316', dasharray: '8 4', width: 3 },        // 橙色虚线
-      { color: '#22c55e', dasharray: '4 4', width: 3 },        // 绿色点线
-      { color: '#ef4444', dasharray: '12 4 4 4', width: 3 },   // 红色点划线
-      { color: '#a855f7', dasharray: '3 3', width: 3 },        // 紫色点线
-      { color: '#06b6d4', dasharray: '6 2 2 2', width: 3 },    // 青色点划线
-      { color: '#ec4899', dasharray: '10 3', width: 3 },        // 粉色虚线
-      { color: '#84cc16', dasharray: '2 2', width: 3 },        // 黄绿色点线
-      { color: '#f59e0b', dasharray: '8 2 4 2', width: 3 },    // 琥珀色点划线
-    ];
-
-    // 模型选择器状态：记录哪些模型是可见的
-    let visibleModels = new Set();
-
-    function getModelStyle(index) {
-      return modelStyles[index % modelStyles.length];
-    }
-
-    function initModelSelector() {
-      // 从 localStorage 加载可见模型
-      try {
-        const saved = loadCalculatorState();
-        if (saved.visibleModels && Array.isArray(saved.visibleModels)) {
-          visibleModels = new Set(saved.visibleModels);
-        }
-      } catch (_) {}
-
-      // 确保至少有默认模型
-      const defaultModel = $('pricingPreset').value;
-      visibleModels.add(defaultModel);
-
-      renderModelSelector();
-    }
-
-    function renderModelSelector() {
-      const container = $('modelSelector');
-      const defaultModel = $('pricingPreset').value;
-      container.innerHTML = '';
-
-      // 只显示有价格数据的预设模型（排除 custom）
-      const modelsWithPrices = pricingPresets.filter((p) => p.id !== 'custom');
-
-      modelsWithPrices.forEach((preset, index) => {
-        const style = getModelStyle(index);
-        const isDefault = preset.id === defaultModel;
-        const isChecked = visibleModels.has(preset.id);
-
-        const label = document.createElement('label');
-        label.className = `model-selector-label${isDefault ? ' disabled' : ''}`;
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = isChecked;
-        checkbox.disabled = isDefault;
-        checkbox.dataset.modelId = preset.id;
-
-        checkbox.addEventListener('change', () => {
-          if (checkbox.checked) {
-            visibleModels.add(preset.id);
-          } else {
-            visibleModels.delete(preset.id);
-          }
-          saveVisibleModels();
-          update();
-        });
-
-        const colorIndicator = document.createElement('span');
-        colorIndicator.className = 'model-color-indicator';
-        colorIndicator.style.backgroundColor = style.color;
-        if (style.dasharray !== 'none') {
-          colorIndicator.style.background = `repeating-linear-gradient(90deg, ${style.color} 0px, ${style.color} 4px, transparent 4px, transparent 8px)`;
-        }
-
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'model-name';
-        nameSpan.textContent = preset.name;
-
-        label.appendChild(checkbox);
-        label.appendChild(colorIndicator);
-        label.appendChild(nameSpan);
-        container.appendChild(label);
-      });
-    }
-
-    function saveVisibleModels() {
-      const saved = loadCalculatorState();
-      saved.visibleModels = Array.from(visibleModels);
-      saveCalculatorState(saved);
-    }
-
-
-
-
-    function applyPricingPreset(presetId) {
-      const preset = pricingPresets.find((item) => item.id === presetId);
-      if (!preset || preset.id === 'custom') {
-        $('presetHint').textContent = preset?.note || '自定义价格不会被预设覆盖。';
-        return;
-      }
-
-      $('priceNew').value = preset.priceNew;
-      $('priceOut').value = preset.priceOut;
-      $('priceHit').value = preset.priceHit;
-      $('priceCreate').value = preset.priceCreate;
-      $('presetHint').textContent = preset.note;
-    }
-
-    function initPricingPresets() {
-      $('pricingPreset').innerHTML = pricingPresets
-        .map((preset) => `<option value="${preset.id}">${preset.name}</option>`)
-        .join('');
-      $('pricingPreset').value = 'gpt55';
-      applyPricingPreset('gpt55');
-    }
 
     // ----- models.dev 真实模型浏览器：按需联网拉取，仅加入内存中的 pricingPresets，不写预设文件 -----
     const PROVIDER_LABELS = {
@@ -485,26 +351,20 @@
       )).join('');
     }
 
-    function registerRuntimePreset(item) {
-      if (!pricingPresets.some((p) => p.id === item.id)) {
-        pricingPresets.push({
-          id: item.id,
-          name: item.label + ' · ' + item.name,
-          priceNew: item.priceNew,
-          priceOut: item.priceOut,
-          priceHit: item.priceHit,
-          priceCreate: item.priceCreate,
-          note: item.note
-        });
-        const opt = document.createElement('option');
-        opt.value = item.id;
-        opt.textContent = item.label + ' · ' + item.name;
-        $('pricingPreset').appendChild(opt);
-      }
-      $('pricingPreset').value = item.id;
-      applyPricingPreset(item.id);
-      visibleModels.add(item.id);
-      renderModelSelector();
+    function addRuntimePreset(item) {
+      const preset = registerRuntimePreset({
+        id: item.id,
+        name: item.label + ' · ' + item.name,
+        priceNew: item.priceNew,
+        priceOut: item.priceOut,
+        priceHit: item.priceHit,
+        priceCreate: item.priceCreate,
+        note: item.note,
+      });
+      $('pricingPreset').value = preset.id;
+      applyPricingPreset(preset.id);
+      ensureModelVisible(preset.id);
+      renderModelSelector(preset.id, update);
       renderPricingTable();
       update();
     }
@@ -512,7 +372,7 @@
     function selectModelsDevModel(id) {
       const item = mdCatalogList.find((m) => m.id === id);
       if (!item) return;
-      registerRuntimePreset(item);
+      addRuntimePreset(item);
       closeModelsDevModal();
     }
 
@@ -522,264 +382,6 @@
 
 
 
-    function renderSummary(data) {
-      const current = calculateCostAtRate(data.currentRate, data);
-      const zero = calculateCostAtRate(0, data);
-      const full = calculateCostAtRate(1, data);
-      const delta = (data.priceNew * data.nonHitNewShare + data.priceCreate * (1 - data.nonHitNewShare) - data.priceHit) * data.totalInputTokens * 0.1 / MILLION;
-      const saved = zero.total - full.total;
-
-      $('currentCost').textContent = formatMoney(current.total);
-      $('currentRateText').textContent = `当前命中率 ${formatPercent(data.currentRate)}，总输入 tokens ${formatToken(data.totalInputTokens)}`;
-      $('zeroCost').textContent = formatMoney(zero.total);
-      $('fullCost').textContent = formatMoney(full.total);
-      $('deltaCost').textContent = `${delta >= 0 ? '+' : ''}${formatMoney(delta)}`;
-      $('deltaText').textContent = delta >= 0
-        ? '命中率每降低 10 个百分点的额外成本'
-        : '命中率降低时成本反而下降，因为创建价低于命中价';
-
-      const direction = saved >= 0 ? '最多可节省' : '100% 命中反而增加';
-      $('chartStatus').textContent = `${direction} ${formatMoney(Math.abs(saved))}；当前点 ${formatMoney(current.total)}`;
-
-      const warnings = [];
-      if (data.totalInputTokens === 0) warnings.push('没有输入 token，命中率不会影响总成本。');
-      if (data.priceCreate < data.priceHit) warnings.push('缓存创建成本低于命中成本，因此曲线会随命中率上升而上升。');
-      $('inlineWarning').innerHTML = warnings.length ? ` <span class="warning">${warnings.join(' ')}</span>` : '';
-    }
-
-    function scaleLinear(domainMin, domainMax, rangeMin, rangeMax) {
-      if (domainMax === domainMin) {
-        return () => (rangeMin + rangeMax) / 2;
-      }
-      return (value) => rangeMin + (value - domainMin) * (rangeMax - rangeMin) / (domainMax - domainMin);
-    }
-
-    function makeSvgEl(name, attrs = {}) {
-      const el = document.createElementNS('http://www.w3.org/2000/svg', name);
-      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
-      return el;
-    }
-
-    function renderChart(series, data) {
-      const svg = $('chart');
-      svg.innerHTML = '';
-
-      const { width, height } = chartSize;
-      const innerW = width - margin.left - margin.right;
-      const innerH = height - margin.top - margin.bottom;
-
-      // 计算所有可见模型的全局 Y 轴范围
-      let globalMinCost = Infinity;
-      let globalMaxCost = -Infinity;
-
-      const modelsWithPrices = pricingPresets.filter((p) => p.id !== 'custom');
-      const visibleModelsData = [];
-
-      modelsWithPrices.forEach((preset, index) => {
-        if (!visibleModels.has(preset.id)) return;
-
-        const modelData = {
-          ...data,
-          priceNew: preset.priceNew || data.priceNew,
-          priceOut: preset.priceOut || data.priceOut,
-          priceHit: preset.priceHit || data.priceHit,
-          priceCreate: preset.priceCreate || data.priceCreate,
-        };
-        const modelSeries = buildSeries(modelData);
-
-        modelSeries.forEach((point) => {
-          globalMinCost = Math.min(globalMinCost, point.total);
-          globalMaxCost = Math.max(globalMaxCost, point.total);
-        });
-
-        visibleModelsData.push({
-          id: preset.id,
-          name: preset.name,
-          series: modelSeries,
-          style: getModelStyle(index),
-          isDefault: preset.id === $('pricingPreset').value
-        });
-      });
-
-      const pad = Math.max((globalMaxCost - globalMinCost) * 0.12, globalMaxCost === 0 ? 1 : globalMaxCost * 0.04);
-      const yMin = Math.max(0, globalMinCost - pad);
-      const yMax = globalMaxCost + pad;
-      const x = scaleLinear(0, 1, margin.left, margin.left + innerW);
-      const y = scaleLinear(yMin, yMax, margin.top + innerH, margin.top);
-
-      const defs = makeSvgEl('defs');
-      svg.appendChild(defs);
-
-      const plot = makeSvgEl('g');
-      svg.appendChild(plot);
-
-      // 绘制网格线和坐标轴
-      for (let i = 0; i <= 5; i += 1) {
-        const rate = i / 5;
-        const xPos = x(rate);
-        plot.appendChild(makeSvgEl('line', {
-          x1: xPos, y1: margin.top, x2: xPos, y2: margin.top + innerH, class: 'grid-line'
-        }));
-        const label = makeSvgEl('text', {
-          x: xPos, y: height - 24, 'text-anchor': 'middle', class: 'tick-label'
-        });
-        label.textContent = `${rate * 100}%`;
-        plot.appendChild(label);
-      }
-
-      for (let i = 0; i <= 4; i += 1) {
-        const value = yMin + (yMax - yMin) * i / 4;
-        const yPos = y(value);
-        plot.appendChild(makeSvgEl('line', {
-          x1: margin.left, y1: yPos, x2: margin.left + innerW, y2: yPos, class: 'grid-line'
-        }));
-        const label = makeSvgEl('text', {
-          x: margin.left - 12, y: yPos + 4, 'text-anchor': 'end', class: 'tick-label'
-        });
-        label.textContent = formatMoney(value);
-        plot.appendChild(label);
-      }
-
-      plot.appendChild(makeSvgEl('line', {
-        x1: margin.left, y1: margin.top + innerH, x2: margin.left + innerW, y2: margin.top + innerH, class: 'axis-line'
-      }));
-      plot.appendChild(makeSvgEl('line', {
-        x1: margin.left, y1: margin.top, x2: margin.left, y2: margin.top + innerH, class: 'axis-line'
-      }));
-
-      const xLabel = makeSvgEl('text', {
-        x: margin.left + innerW / 2, y: height - 8, 'text-anchor': 'middle', class: 'axis-label'
-      });
-      xLabel.textContent = '缓存命中率';
-      plot.appendChild(xLabel);
-
-      const yLabel = makeSvgEl('text', {
-        x: 18, y: margin.top + innerH / 2, 'text-anchor': 'middle', class: 'axis-label', transform: `rotate(-90 18 ${margin.top + innerH / 2})`
-      });
-      yLabel.textContent = '总成本（USD）';
-      plot.appendChild(yLabel);
-
-      // 绘制每个可见模型的折线
-      visibleModelsData.forEach((model) => {
-        const linePoints = model.series.map((point) => `${x(point.rate)},${y(point.total)}`).join(' ');
-
-        // 为默认模型添加面积填充
-        if (model.isDefault) {
-          const areaPoints = `${margin.left},${margin.top + innerH} ${linePoints} ${margin.left + innerW},${margin.top + innerH}`;
-          const areaGradientId = `areaGradient-${model.id}`;
-          const gradient = makeSvgEl('linearGradient', { id: areaGradientId, x1: '0', y1: '0', x2: '0', y2: '1' });
-          gradient.appendChild(makeSvgEl('stop', { offset: '0%', 'stop-color': model.style.color, 'stop-opacity': '0.20' }));
-          gradient.appendChild(makeSvgEl('stop', { offset: '100%', 'stop-color': model.style.color, 'stop-opacity': '0.00' }));
-          defs.appendChild(gradient);
-          plot.appendChild(makeSvgEl('polygon', { points: areaPoints, fill: `url(#${areaGradientId})` }));
-        }
-
-        const lineAttrs = {
-          points: linePoints,
-          fill: 'none',
-          stroke: model.style.color,
-          'stroke-width': model.style.width,
-          'stroke-linecap': 'round',
-          'stroke-linejoin': 'round',
-        };
-        if (model.style.dasharray !== 'none') {
-          lineAttrs['stroke-dasharray'] = model.style.dasharray;
-        }
-        plot.appendChild(makeSvgEl('polyline', lineAttrs));
-      });
-
-      // 当前命中率指示线（只对默认模型）
-      const defaultModel = visibleModelsData.find((m) => m.isDefault);
-      if (defaultModel) {
-        const current = calculateCostAtRate(data.currentRate, { ...data, ...defaultModel.series.find((p) => Math.abs(p.rate - data.currentRate) < 0.01) || {} });
-        const currentPoint = defaultModel.series.reduce((best, point) => {
-          return Math.abs(point.rate - data.currentRate) < Math.abs(best.rate - data.currentRate) ? point : best;
-        }, defaultModel.series[0]);
-        const currentX = x(data.currentRate);
-        const currentY = y(currentPoint.total);
-        plot.appendChild(makeSvgEl('line', {
-          x1: currentX, y1: margin.top, x2: currentX, y2: margin.top + innerH, class: 'current-line'
-        }));
-        plot.appendChild(makeSvgEl('circle', {
-          cx: currentX, cy: currentY, r: 7, class: 'current-dot'
-        }));
-      }
-
-      // 悬浮点和交互层
-      const hoverDots = visibleModelsData.map((model) => {
-        const dot = makeSvgEl('circle', {
-          cx: -100, cy: -100, r: 6,
-          fill: model.style.color,
-          stroke: '#ffffff',
-          'stroke-width': 3
-        });
-        plot.appendChild(dot);
-        return { dot, model };
-      });
-
-      const hoverRect = makeSvgEl('rect', {
-        x: margin.left, y: margin.top, width: innerW, height: innerH, fill: 'transparent', class: 'hover-layer'
-      });
-      plot.appendChild(hoverRect);
-
-      const tooltip = $('tooltip');
-      const chartWrap = svg.parentElement;
-
-      function showPoint(clientX) {
-        const rect = svg.getBoundingClientRect();
-        const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
-        const svgX = ratio * width;
-        const rate = clamp((svgX - margin.left) / innerW, 0, 1);
-
-        // 找到最近的数据点
-        const nearestRate = visibleModelsData[0]?.series.reduce((best, point) => {
-          return Math.abs(point.rate - rate) < Math.abs(best.rate - rate) ? point.rate : best;
-        }, visibleModelsData[0].series[0].rate) || rate;
-
-        // 更新每个模型的悬浮点
-        hoverDots.forEach(({ dot, model }) => {
-          const nearest = model.series.reduce((best, point) => {
-            return Math.abs(point.rate - nearestRate) < Math.abs(best.rate - nearestRate) ? point : best;
-          }, model.series[0]);
-          const dotX = x(nearest.rate);
-          const dotY = y(nearest.total);
-          dot.setAttribute('cx', dotX);
-          dot.setAttribute('cy', dotY);
-        });
-
-        const wrapRect = chartWrap.getBoundingClientRect();
-        const firstDot = hoverDots[0];
-        if (!firstDot) return;
-
-        const dotX = parseFloat(firstDot.dot.getAttribute('cx'));
-        const dotY = parseFloat(firstDot.dot.getAttribute('cy'));
-        const screenX = rect.left + dotX / width * rect.width - wrapRect.left;
-        const screenY = rect.top + dotY / height * rect.height - wrapRect.top;
-        tooltip.style.left = `${screenX}px`;
-        tooltip.style.top = `${screenY}px`;
-        tooltip.style.opacity = '1';
-
-        // 生成 tooltip 内容
-        let tooltipHtml = `<strong>${formatPercent(nearestRate)}</strong><br><br>`;
-        visibleModelsData.forEach((model) => {
-          const nearest = model.series.reduce((best, point) => {
-            return Math.abs(point.rate - nearestRate) < Math.abs(best.rate - nearestRate) ? point : best;
-          }, model.series[0]);
-          tooltipHtml += `<span style="color:${model.style.color}">●</span> ${model.name}: <strong>${formatMoney(nearest.total)}</strong><br>`;
-        });
-        tooltip.innerHTML = tooltipHtml;
-      }
-
-      hoverRect.addEventListener('mousemove', (event) => showPoint(event.clientX));
-      hoverRect.addEventListener('mouseenter', (event) => showPoint(event.clientX));
-      hoverRect.addEventListener('mouseleave', () => {
-        tooltip.style.opacity = '0';
-        hoverDots.forEach(({ dot }) => {
-          dot.setAttribute('cx', -100);
-          dot.setAttribute('cy', -100);
-        });
-      });
-    }
 
     const tokenFields = ['tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate'];
 
@@ -788,7 +390,7 @@
       tokenFields.forEach((id) => { saved[id] = $(id).value; });
       saved.multiplier = $('multiplier').value;
       saved.pricingPreset = $('pricingPreset').value;
-      saved.visibleModels = Array.from(visibleModels);
+      saved.visibleModels = Array.from(getVisibleModels());
       saveCalculatorState(saved);
     }
 
@@ -798,9 +400,8 @@
 
     function update() {
       const data = readInputs();
-      const series = buildSeries(data);
       renderSummary(data);
-      renderChart(series, data);
+      renderChart(data, getPricingPresets(), getVisibleModels(), $('pricingPreset').value);
       saveToStorage();
     }
 
@@ -809,45 +410,20 @@
         applyPricingPreset($('pricingPreset').value);
         // 切换预设时，确保新预设成为默认模型且可见
         const newPreset = $('pricingPreset').value;
-        visibleModels.add(newPreset);
-        renderModelSelector();
+        ensureModelVisible(newPreset);
+        renderModelSelector(newPreset, update);
       }
       update();
     }));
 
-    // 生成定价表格
-    function renderPricingTable() {
-      const tbody = document.getElementById('pricingTableBody');
-      const models = pricingPresets
-        .filter((p) => p.id !== 'custom')
-        .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-
-      tbody.innerHTML = models.map((preset) => {
-        const formatPrice = (val) => {
-          if (val === 0) return '<span class="price-zero">$0</span>';
-          // 显示原始精度，避免四舍五入
-          const str = String(val);
-          return `$${str}`;
-        };
-        return `
-          <tr>
-            <td>${preset.name}</td>
-            <td>${formatPrice(preset.priceNew)}</td>
-            <td>${formatPrice(preset.priceOut)}</td>
-            <td>${formatPrice(preset.priceHit)}</td>
-            <td>${formatPrice(preset.priceCreate)}</td>
-          </tr>
-        `;
-      }).join('');
-    }
 
     // 异步初始化
     async function init() {
       await loadPricingPresets();
 
       const saved = loadFromStorage();
-      initPricingPresets();
-      if (saved.pricingPreset && pricingPresets.find((p) => p.id === saved.pricingPreset)) {
+      initPricingPresets('gpt55');
+      if (saved.pricingPreset && findPricingPreset(saved.pricingPreset)) {
         $('pricingPreset').value = saved.pricingPreset;
         applyPricingPreset(saved.pricingPreset);
       }
@@ -857,7 +433,7 @@
       if (saved.multiplier !== undefined && saved.multiplier !== '') $('multiplier').value = saved.multiplier;
 
       renderPricingTable();
-      initModelSelector();
+      initModelSelector($('pricingPreset').value, saved.visibleModels, update);
       setupModelsDevBrowser();
       update();
     }
