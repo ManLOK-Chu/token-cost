@@ -67,15 +67,22 @@ function update() {
   saveToStorage();
 }
 
-function applyModelsDevModel(item) {
+function applyModelsDevModel(model) {
+  const missingCacheFields = [];
+  if (model.priceCacheRead === null) missingCacheFields.push('缓存读取价');
+  if (model.priceCacheWrite === null) missingCacheFields.push('缓存写入价');
+  const missingNote = missingCacheFields.length
+    ? `models.dev 未提供${missingCacheFields.join('和')}，计算器暂按 $0 填充。`
+    : 'models.dev 提供了缓存读取和写入价格。';
+
   const preset = registerRuntimePreset({
-    id: item.id,
-    name: `${item.label} · ${item.name}`,
-    priceNew: item.priceNew,
-    priceOut: item.priceOut,
-    priceHit: item.priceHit,
-    priceCreate: item.priceCreate,
-    note: item.note,
+    id: model.id,
+    name: `${model.providerName} · ${model.name}`,
+    priceNew: model.priceInput,
+    priceOut: model.priceOutput,
+    priceHit: model.priceCacheRead ?? 0,
+    priceCreate: model.priceCacheWrite ?? 0,
+    note: `来自 models.dev（${model.providerName}）。${missingNote} 实际价格以供应商账单为准。`,
   });
   $('pricingPreset').value = preset.id;
   applyPricingPreset(preset.id);

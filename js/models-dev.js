@@ -13,6 +13,7 @@ const state = {
 };
 let catalogPromise = null;
 let selectCallback = () => {};
+let returnFocusElement = null;
 
 function nullableNumber(value) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -139,6 +140,27 @@ function renderSortHeaders() {
     header.querySelector('span').textContent = active ? (state.sortDirection === 'asc' ? '↑' : '↓') : '↕';
   });
 }
+function selectedModel() {
+  return state.catalog.find((model) => model.id === state.selectedModelId) || null;
+}
+function canUseModel(model) {
+  return model !== null && model.priceInput !== null && model.priceOutput !== null;
+}
+function renderSelection() {
+  const model = selectedModel();
+  const confirm = $('mdConfirm');
+  if (!model) {
+    $('mdSelectedName').textContent = '请先选择一个模型';
+    $('mdSelectedMeta').textContent = '';
+    confirm.disabled = true;
+    return;
+  }
+  $('mdSelectedName').textContent = model.name;
+  $('mdSelectedMeta').textContent = canUseModel(model)
+    ? model.providerName
+    : `${model.providerName} · 缺少输入或输出价格，不能使用`;
+  confirm.disabled = !canUseModel(model);
+}
 function renderResults() {
   const filtered = filterModels(state.catalog, state);
   const shown = sortModels(filtered, state).slice(0, RENDER_LIMIT);
@@ -147,6 +169,7 @@ function renderResults() {
   $('mdEmpty').textContent = shown.length ? '' : '没有匹配当前搜索和筛选条件的模型。';
   $('mdStatus').textContent = `匹配 ${filtered.length} / 总计 ${state.catalog.length} 个模型 · USD / 1M tokens · 来源 models.dev${filtered.length > shown.length ? ` · 当前显示前 ${shown.length} 个` : ''}`;
   renderSortHeaders();
+  renderSelection();
 }
 function renderControls() {
   $('mdSearch').value = state.query;
@@ -157,6 +180,20 @@ function setSort(sortKey) {
   if (state.sortKey === sortKey) state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
   else { state.sortKey = sortKey; state.sortDirection = 'asc'; }
   renderResults();
+}
+function renderError() {
+  $('mdTableBody').replaceChildren();
+  $('mdEmpty').hidden = false;
+  $('mdEmpty').replaceChildren();
+  const message = document.createElement('p');
+  message.textContent = '无法加载 models.dev 目录。静态预设和成本计算器仍可继续使用。';
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.id = 'mdRetry';
+  retry.className = 'md-clear';
+  retry.textContent = '重新加载';
+  $('mdEmpty').append(message, retry);
+  $('mdStatus').textContent = `加载失败：${state.error?.message || '未知错误'}`;
 }
 function loadCatalog() {
   if (state.catalog.length) return Promise.resolve(state.catalog);
@@ -169,14 +206,64 @@ function loadCatalog() {
     .finally(() => { state.loading = false; });
   return catalogPromise;
 }
-function openModal() {
-  $('mdOverlay').classList.add('open');
-  resetViewState();
-  $('mdStatus').textContent = '正在从 models.dev 拉取最新模型与价格…';
-  loadCatalog().then(() => { renderControls(); $('mdSearch').focus(); }).catch((error) => { $('mdStatus').textContent = `加载失败：${error.message}`; });
+function focusableElements() {
+  return [...$('mdOverlay').querySelectorAll(
+    'button:not([disabled]), input:not([disabled]), select:not([disabled]), summary, [tabindex]:not([tabindex="-1"])',
+  )].filter((element) => !element.hidden && element.offsetParent !== null);
 }
-function closeModal() { $('mdOverlay').classList.remove('open'); resetViewState(); }
-function selectRow(modelId) { state.selectedModelId = modelId; renderResults(); }
+function openModal() {
+  returnFocusElement = document.activeElement;
+  $('mdOverlay').classList.add('open');
+  document.body.classList.add('md-modal-open');
+  resetViewState();
+  renderSelection();
+  $('mdStatus').textContent = '正在从 models.dev 拉取最新模型与价格…';
+  loadCatalog().then(() => {
+    state.error = null;
+    renderControls();
+    $('mdSearch').focus();
+  }).catch(() => {
+    renderError();
+    $('mdRetry')?.focus();
+  });
+}
+function closeModal() {
+  $('mdOverlay').classList.remove('open');
+  document.body.classList.remove('md-modal-open');
+  resetViewState();
+  renderSelection();
+  returnFocusElement?.focus();
+}
+function selectRow(modelId) {
+  state.selectedModelId = modelId;
+  renderResults();
+}
+function confirmSelection() {
+  const model = selectedModel();
+  if (!canUseModel(model)) return;
+  selectCallback(model);
+  closeModal();
+}
+function handleDialogKeydown(event) {
+  if (!$('mdOverlay').classList.contains('open')) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeModal();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const focusable = focusableElements();
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
 
 export function setupModelsDevBrowser({ onSelect }) {
   selectCallback = onSelect;
@@ -192,8 +279,16 @@ export function setupModelsDevBrowser({ onSelect }) {
   });
   $('mdCacheFilter').addEventListener('change', (event) => { state.cacheFilter = event.target.value; state.selectedModelId = null; renderResults(); });
   $('mdClearFilters').addEventListener('click', () => { resetViewState(); renderControls(); });
+  $('mdConfirm').addEventListener('click', confirmSelection);
+  $('mdTableWrap').addEventListener('click', (event) => {
+    if (event.target.id !== 'mdRetry') return;
+    state.error = null;
+    $('mdEmpty').hidden = true;
+    $('mdStatus').textContent = '正在重新加载 models.dev 目录…';
+    loadCatalog().then(() => { renderControls(); $('mdSearch').focus(); }).catch(() => { renderError(); $('mdRetry')?.focus(); });
+  });
   document.querySelector('.md-table thead').addEventListener('click', (event) => { const header = event.target.closest('th[data-sort-key]'); if (header) setSort(header.dataset.sortKey); });
   $('mdTableBody').addEventListener('click', (event) => { const row = event.target.closest('tr[data-model-id]'); if (row) selectRow(row.dataset.modelId); });
   $('mdTableBody').addEventListener('keydown', (event) => { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('tr[data-model-id]')) { event.preventDefault(); selectRow(event.target.dataset.modelId); } });
-  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && $('mdOverlay').classList.contains('open')) closeModal(); });
+  document.addEventListener('keydown', handleDialogKeydown);
 }
