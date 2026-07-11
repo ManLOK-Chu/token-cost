@@ -170,9 +170,11 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { $, clamp, escapeHtml } from './js/dom.js';
+    import { MILLION, buildSeries, calculateCostAtRate, formatMoney, formatPercent, formatToken, readInputs } from './js/pricing.js';
+    import { loadCalculatorState, loadTheme, saveCalculatorState, saveTheme } from './js/storage.js';
     // 主题切换逻辑
-    const THEME_KEY = 'token-calc-theme';
     const themeToggle = document.getElementById('themeToggle');
 
     function getSystemTheme() {
@@ -195,13 +197,13 @@
       const isDark = document.documentElement.classList.contains('dark-mode');
       const newTheme = isDark ? 'light' : 'dark';
       applyTheme(newTheme);
-      try { localStorage.setItem(THEME_KEY, newTheme); } catch (_) {}
+      saveTheme(newTheme);
     }
 
     // 初始化主题
     (function initTheme() {
       try {
-        const saved = localStorage.getItem(THEME_KEY);
+        const saved = loadTheme();
         if (saved) {
           applyTheme(saved);
         } else {
@@ -216,15 +218,13 @@
 
     // 监听系统主题变化
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-      if (!localStorage.getItem(THEME_KEY)) {
+      if (!loadTheme()) {
         applyTheme(e.matches ? 'dark' : 'light');
       }
     });
 
-    const MILLION = 1_000_000;
     const chartSize = { width: 980, height: 430 };
     const margin = { top: 34, right: 34, bottom: 58, left: 78 };
-    const STORAGE_KEY = 'token-cost-calculator';
     const fields = [
       'priceNew', 'priceOut', 'priceHit', 'priceCreate',
       'tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate', 'multiplier', 'pricingPreset'
@@ -272,7 +272,7 @@
     function initModelSelector() {
       // 从 localStorage 加载可见模型
       try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const saved = loadCalculatorState();
         if (saved.visibleModels && Array.isArray(saved.visibleModels)) {
           visibleModels = new Set(saved.visibleModels);
         }
@@ -336,23 +336,13 @@
     }
 
     function saveVisibleModels() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-        saved.visibleModels = Array.from(visibleModels);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-      } catch (_) {}
+      const saved = loadCalculatorState();
+      saved.visibleModels = Array.from(visibleModels);
+      saveCalculatorState(saved);
     }
 
-    const $ = (id) => document.getElementById(id);
 
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value));
-    }
 
-    function readNumber(id) {
-      const value = Number($(id).value);
-      return Number.isFinite(value) && value > 0 ? value : 0;
-    }
 
     function applyPricingPreset(presetId) {
       const preset = pricingPresets.find((item) => item.id === presetId);
@@ -390,11 +380,6 @@
 
     const fmtUsd = (v) => (v >= 1 ? v.toFixed(2) : v.toFixed(v < 0.01 ? 4 : 3));
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, (ch) => (
-        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
-      ));
-    }
 
     function loadModelsDevCatalog() {
       if (mdCatalogPromise) return mdCatalogPromise;
@@ -531,78 +516,11 @@
       closeModelsDevModal();
     }
 
-    function readInputs() {
-      const data = {
-        priceNew: readNumber('priceNew'),
-        priceOut: readNumber('priceOut'),
-        priceHit: readNumber('priceHit'),
-        priceCreate: readNumber('priceCreate'),
-        tokensNew: readNumber('tokensNew'),
-        tokensOut: readNumber('tokensOut'),
-        tokensHit: readNumber('tokensHit'),
-        tokensCreate: readNumber('tokensCreate'),
-        multiplier: readNumber('multiplier') || 1
-      };
 
-      data.totalInputTokens = data.tokensNew + data.tokensHit + data.tokensCreate;
-      data.nonHitTokens = data.tokensNew + data.tokensCreate;
-      data.nonHitNewShare = data.nonHitTokens > 0 ? data.tokensNew / data.nonHitTokens : 1;
-      data.currentRate = data.totalInputTokens > 0 ? data.tokensHit / data.totalInputTokens : 0;
-      return data;
-    }
 
-    function calculateCostAtRate(rate, data) {
-      const hitTokens = data.totalInputTokens * rate;
-      const nonHitTokens = data.totalInputTokens - hitTokens;
-      const newTokens = nonHitTokens * data.nonHitNewShare;
-      const createTokens = nonHitTokens - newTokens;
-      const newCost = data.priceNew * newTokens;
-      const outCost = data.priceOut * data.tokensOut;
-      const hitCost = data.priceHit * hitTokens;
-      const createCost = data.priceCreate * createTokens;
 
-      return {
-        rate,
-        newTokens,
-        hitTokens,
-        createTokens,
-        newCost: newCost / MILLION * data.multiplier,
-        outCost: outCost / MILLION * data.multiplier,
-        hitCost: hitCost / MILLION * data.multiplier,
-        createCost: createCost / MILLION * data.multiplier,
-        total: (newCost + outCost + hitCost + createCost) / MILLION * data.multiplier
-      };
-    }
 
-    function buildSeries(data) {
-      const rates = new Set([0, 1, Number(data.currentRate.toFixed(6))]);
-      for (let pct = 0; pct <= 100; pct += 1) {
-        rates.add(Number((pct / 100).toFixed(6)));
-      }
-      rates.add(1);
 
-      return [...rates]
-        .sort((a, b) => a - b)
-        .map((rate) => calculateCostAtRate(rate, data));
-    }
-
-    function formatMoney(value) {
-      if (!Number.isFinite(value)) return '$0.00';
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value);
-    }
-
-    function formatToken(value) {
-      return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 0 }).format(value);
-    }
-
-    function formatPercent(rate) {
-      return `${(rate * 100).toFixed(rate === 0 || rate === 1 ? 0 : 1)}%`;
-    }
 
     function renderSummary(data) {
       const current = calculateCostAtRate(data.currentRate, data);
@@ -866,19 +784,16 @@
     const tokenFields = ['tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate'];
 
     function saveToStorage() {
-      const data = {};
-      tokenFields.forEach((id) => { data[id] = $(id).value; });
-      data.multiplier = $('multiplier').value;
-      data.pricingPreset = $('pricingPreset').value;
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+      const saved = loadCalculatorState();
+      tokenFields.forEach((id) => { saved[id] = $(id).value; });
+      saved.multiplier = $('multiplier').value;
+      saved.pricingPreset = $('pricingPreset').value;
+      saved.visibleModels = Array.from(visibleModels);
+      saveCalculatorState(saved);
     }
 
     function loadFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return JSON.parse('{}');
-        return JSON.parse(raw);
-      } catch (_) { return {}; }
+      return loadCalculatorState();
     }
 
     function update() {
