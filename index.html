@@ -152,21 +152,61 @@
 
   <button class="theme-toggle" id="themeToggle" title="切换深色/浅色模式">🌙</button>
 
-  <div class="md-overlay" id="mdOverlay" role="dialog" aria-modal="true" aria-label="浏览 models.dev 真实模型">
+  <div class="md-overlay" id="mdOverlay" role="dialog" aria-modal="true" aria-labelledby="mdTitle" aria-describedby="mdDescription">
     <div class="md-modal">
       <div class="md-head">
         <div>
           <div class="md-titleline">
             <span class="md-ledger-mark">$/M</span>
-            <h3>models.dev 价格目录</h3>
+            <h3 id="mdTitle">models.dev 价格目录</h3>
           </div>
-          <p class="md-sub">按需拉取当前模型价格，选中后填充到上方定价。仅本次会话有效，不会修改本地预设。</p>
+          <p class="md-sub" id="mdDescription">搜索、筛选并比较当前模型价格。确认后仅加入本次页面会话，不修改本地预设。</p>
         </div>
         <button type="button" class="md-close" id="mdClose" aria-label="关闭">×</button>
       </div>
-      <input type="text" class="md-search" id="mdSearch" placeholder="搜索模型名称或厂商，例如 gpt、claude、gemini、deepseek…" autocomplete="off">
-      <div class="md-status" id="mdStatus"></div>
-      <div class="md-list" id="mdList"></div>
+      <div class="md-controls">
+        <input type="search" class="md-search" id="mdSearch" placeholder="搜索模型名称、ID、family 或厂商…" autocomplete="off">
+        <div class="md-filter-bar">
+          <details class="md-provider-filter" id="mdProviderFilter">
+            <summary id="mdProviderSummary">厂商</summary>
+            <div class="md-provider-menu" id="mdProviderMenu"></div>
+          </details>
+          <label class="md-cache-filter">缓存支持
+            <select id="mdCacheFilter">
+              <option value="all">全部</option>
+              <option value="supported">支持缓存</option>
+              <option value="unsupported">不支持缓存</option>
+            </select>
+          </label>
+          <button type="button" class="md-clear" id="mdClearFilters">清除筛选</button>
+        </div>
+        <div class="md-status" id="mdStatus" aria-live="polite"></div>
+      </div>
+      <div class="md-table-wrap" id="mdTableWrap">
+        <table class="md-table">
+          <thead>
+            <tr>
+              <th scope="col">模型</th>
+              <th scope="col">厂商</th>
+              <th scope="col" data-sort-key="contextWindow" aria-sort="none"><button type="button">Context <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" data-sort-key="priceInput" aria-sort="none"><button type="button">输入 <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" data-sort-key="priceOutput" aria-sort="none"><button type="button">输出 <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" data-sort-key="priceCacheRead" aria-sort="none"><button type="button">缓存读取 <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" data-sort-key="priceCacheWrite" aria-sort="none"><button type="button">缓存写入 <span aria-hidden="true">↕</span></button></th>
+            </tr>
+          </thead>
+          <tbody id="mdTableBody"></tbody>
+        </table>
+        <div class="md-empty" id="mdEmpty" hidden></div>
+      </div>
+      <div class="md-confirm-bar">
+        <div>
+          <span class="md-selection-label">当前选择</span>
+          <strong id="mdSelectedName">请先选择一个模型</strong>
+          <span id="mdSelectedMeta"></span>
+        </div>
+        <button type="button" class="md-confirm" id="mdConfirm" disabled>使用此模型</button>
+      </div>
     </div>
   </div>
 

@@ -6,9 +6,12 @@ const PROVIDER_LABELS = {
   alibaba: 'Qwen', xiaomi: 'Xiaomi', moonshotai: 'Kimi', meta: 'Meta',
   cohere: 'Cohere', perplexity: 'Perplexity', groq: 'Groq', togetherai: 'Together',
 };
-
+const RENDER_LIMIT = 300;
+const state = {
+  catalog: [], query: '', selectedProviders: new Set(), cacheFilter: 'all',
+  sortKey: null, sortDirection: 'asc', selectedModelId: null, loading: false, error: null,
+};
 let catalogPromise = null;
-let catalogList = [];
 let selectCallback = () => {};
 
 function nullableNumber(value) {
@@ -17,16 +20,12 @@ function nullableNumber(value) {
 
 export function normalizeCatalog(catalog) {
   const providers = catalog?.providers;
-  if (!providers || typeof providers !== 'object') {
-    throw new Error('models.dev 返回了无法识别的目录结构');
-  }
-
+  if (!providers || typeof providers !== 'object') throw new Error('models.dev 返回了无法识别的目录结构');
   const result = [];
   let originalIndex = 0;
   for (const [providerId, provider] of Object.entries(providers)) {
     const models = provider?.models;
     if (!models || typeof models !== 'object') continue;
-
     for (const [sourceId, model] of Object.entries(models)) {
       const cost = model?.cost || {};
       const providerName = PROVIDER_LABELS[providerId] || provider?.name || providerId;
@@ -37,22 +36,11 @@ export function normalizeCatalog(catalog) {
       const priceOutput = nullableNumber(cost.output);
       const priceCacheRead = nullableNumber(cost.cache_read);
       const priceCacheWrite = nullableNumber(cost.cache_write);
-
       result.push({
-        id: `md-${providerId}-${sourceId}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        sourceId,
-        name,
-        providerId,
-        providerName,
-        family,
-        contextWindow,
-        priceInput,
-        priceOutput,
-        priceCacheRead,
-        priceCacheWrite,
-        supportsCache: priceCacheRead !== null || priceCacheWrite !== null,
-        searchText: [providerId, providerName, name, sourceId, family].join(' ').toLowerCase(),
-        originalIndex,
+        id: `md-${providerId}-${sourceId}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'), sourceId, name,
+        providerId, providerName, family, contextWindow, priceInput, priceOutput, priceCacheRead,
+        priceCacheWrite, supportsCache: priceCacheRead !== null || priceCacheWrite !== null,
+        searchText: [providerId, providerName, name, sourceId, family].join(' ').toLowerCase(), originalIndex,
       });
       originalIndex += 1;
     }
@@ -60,29 +48,15 @@ export function normalizeCatalog(catalog) {
   return result;
 }
 
-function queryTerms(query) {
-  return query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-}
-
-export function matchesQuery(model, query) {
-  return queryTerms(query).every((term) => model.searchText.includes(term));
-}
-
+function queryTerms(query) { return query.trim().toLowerCase().split(/\s+/).filter(Boolean); }
+export function matchesQuery(model, query) { return queryTerms(query).every((term) => model.searchText.includes(term)); }
 export function filterModels(models, { query, selectedProviders, cacheFilter }) {
-  return models.filter((model) => {
-    if (!matchesQuery(model, query)) return false;
-    if (selectedProviders.size > 0 && !selectedProviders.has(model.providerId)) return false;
-    if (cacheFilter === 'supported' && !model.supportsCache) return false;
-    if (cacheFilter === 'unsupported' && model.supportsCache) return false;
-    return true;
-  });
+  return models.filter((model) => matchesQuery(model, query)
+    && (selectedProviders.size === 0 || selectedProviders.has(model.providerId))
+    && (cacheFilter !== 'supported' || model.supportsCache)
+    && (cacheFilter !== 'unsupported' || !model.supportsCache));
 }
-
-function completeness(model) {
-  return [model.contextWindow, model.priceInput, model.priceOutput, model.priceCacheRead, model.priceCacheWrite]
-    .filter((value) => value !== null).length;
-}
-
+function completeness(model) { return [model.contextWindow, model.priceInput, model.priceOutput, model.priceCacheRead, model.priceCacheWrite].filter((value) => value !== null).length; }
 function relevanceScore(model, query) {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return 0;
@@ -93,149 +67,133 @@ function relevanceScore(model, query) {
   if (name.includes(normalized) || sourceId.includes(normalized)) return 200;
   return 100;
 }
-
-function stableFallback(a, b) {
-  return a.providerName.localeCompare(b.providerName, 'en')
-    || a.name.localeCompare(b.name, 'en')
-    || a.originalIndex - b.originalIndex;
-}
-
+function stableFallback(a, b) { return a.providerName.localeCompare(b.providerName, 'en') || a.name.localeCompare(b.name, 'en') || a.originalIndex - b.originalIndex; }
 function compareNullableNumber(a, b, direction) {
   if (a === null && b === null) return 0;
   if (a === null) return 1;
   if (b === null) return -1;
   return direction === 'asc' ? a - b : b - a;
 }
-
 export function sortModels(models, { query, sortKey, sortDirection }) {
   return [...models].sort((a, b) => {
-    if (sortKey) {
-      const numeric = compareNullableNumber(a[sortKey], b[sortKey], sortDirection);
-      return numeric || stableFallback(a, b);
-    }
-    const scoreDifference = relevanceScore(b, query) - relevanceScore(a, query);
-    if (scoreDifference) return scoreDifference;
-    const completenessDifference = completeness(b) - completeness(a);
-    if (completenessDifference) return completenessDifference;
-    if (a.supportsCache !== b.supportsCache) return a.supportsCache ? -1 : 1;
-    return stableFallback(a, b);
+    if (sortKey) return compareNullableNumber(a[sortKey], b[sortKey], sortDirection) || stableFallback(a, b);
+    return relevanceScore(b, query) - relevanceScore(a, query)
+      || completeness(b) - completeness(a)
+      || (a.supportsCache === b.supportsCache ? 0 : a.supportsCache ? -1 : 1)
+      || stableFallback(a, b);
   });
 }
-
 export function formatContextWindow(value) {
   if (value === null) return '—';
   if (value >= 1_000_000) return `${value / 1_000_000}M`;
   if (value >= 1_000) return `${value / 1_000}K`;
   return String(value);
 }
+export function formatCatalogPrice(value) { return value === null ? '—' : `$${String(value)}`; }
 
-export function formatCatalogPrice(value) {
-  return value === null ? '—' : `$${String(value)}`;
+function resetViewState() {
+  state.query = '';
+  state.selectedProviders.clear();
+  state.cacheFilter = 'all';
+  state.sortKey = null;
+  state.sortDirection = 'asc';
+  state.selectedModelId = null;
 }
-
-function loadCatalog() {
-  if (catalogPromise) return catalogPromise;
-  catalogPromise = fetch('https://models.dev/catalog.json', { cache: 'no-cache' })
-    .then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.json();
-    })
-    .then((catalog) => {
-      catalogList = normalizeCatalog(catalog);
-    })
-    .catch((error) => {
-      catalogPromise = null;
-      throw error;
-    });
-  return catalogPromise;
-}
-
-function legacyModel(model) {
-  return {
-    id: model.id,
-    provider: model.providerId,
-    label: model.providerName,
-    name: model.name,
-    priceNew: model.priceInput,
-    priceOut: model.priceOutput,
-    priceHit: model.priceCacheRead ?? 0,
-    priceCreate: model.priceCacheWrite ?? 0,
-    note: `来自 models.dev（${model.providerName}），为基础费率，可能存在分档/上下文溢价，以官方账单为准。`,
-  };
-}
-
-function renderResults(query) {
-  const list = $('mdList');
-  const matches = sortModels(filterModels(catalogList, {
-    query,
-    selectedProviders: new Set(),
-    cacheFilter: 'all',
-  }), { query, sortKey: null, sortDirection: 'asc' });
-  const shown = matches.filter((model) => model.priceInput !== null && model.priceOutput !== null).slice(0, 300);
-  if (!shown.length) {
-    list.innerHTML = '<div class="md-empty">没有匹配的模型。</div>';
-    return;
-  }
-  $('mdStatus').textContent = `共 ${matches.length} 个模型，当前显示前 ${shown.length} 个带输入与输出价格的模型。`;
-  list.replaceChildren(...shown.map((model) => {
-    const row = document.createElement('div');
-    row.className = 'md-row';
-    row.dataset.id = model.id;
-    row.tabIndex = 0;
-    row.setAttribute('role', 'option');
-    row.textContent = `${model.providerName} · ${model.name} · in ${formatCatalogPrice(model.priceInput)} · out ${formatCatalogPrice(model.priceOutput)}`;
-    return row;
+function renderProviderMenu() {
+  const providers = [...new Map(state.catalog.map((model) => [model.providerId, model.providerName]))]
+    .sort((a, b) => a[1].localeCompare(b[1], 'en'));
+  $('mdProviderMenu').replaceChildren(...providers.map(([providerId, providerName]) => {
+    const label = document.createElement('label');
+    label.className = 'md-provider-option';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox'; checkbox.value = providerId; checkbox.checked = state.selectedProviders.has(providerId);
+    const text = document.createElement('span'); text.textContent = providerName;
+    label.append(checkbox, text); return label;
   }));
+  $('mdProviderSummary').textContent = state.selectedProviders.size ? `厂商（${state.selectedProviders.size}）` : '厂商';
 }
-
-function showReady() {
-  renderResults('');
-  $('mdSearch').focus();
+function createCell(value, formatter) {
+  const cell = document.createElement('td');
+  cell.className = `md-number${value === null ? ' md-missing' : ''}`;
+  cell.textContent = formatter(value); return cell;
 }
-
-function openModal() {
-  $('mdOverlay').classList.add('open');
-  if (catalogList.length) return showReady();
-  if (catalogPromise) return;
-  $('mdStatus').textContent = '正在从 models.dev 拉取最新模型与价格…';
-  loadCatalog().then(showReady).catch((error) => {
-    $('mdStatus').textContent = `加载失败：${error.message}`;
+function createModelRow(model) {
+  const row = document.createElement('tr');
+  row.dataset.modelId = model.id; row.tabIndex = 0;
+  row.setAttribute('aria-selected', String(state.selectedModelId === model.id));
+  row.classList.toggle('selected', state.selectedModelId === model.id);
+  const modelCell = document.createElement('td');
+  const name = document.createElement('span'); name.className = 'md-model-name'; name.textContent = model.name;
+  const id = document.createElement('span'); id.className = 'md-model-id'; id.textContent = model.sourceId;
+  modelCell.append(name, id);
+  const provider = document.createElement('td'); provider.textContent = model.providerName;
+  row.append(modelCell, provider, createCell(model.contextWindow, formatContextWindow),
+    createCell(model.priceInput, formatCatalogPrice), createCell(model.priceOutput, formatCatalogPrice),
+    createCell(model.priceCacheRead, formatCatalogPrice), createCell(model.priceCacheWrite, formatCatalogPrice));
+  return row;
+}
+function renderSortHeaders() {
+  document.querySelectorAll('.md-table th[data-sort-key]').forEach((header) => {
+    const active = header.dataset.sortKey === state.sortKey;
+    header.setAttribute('aria-sort', active ? (state.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none');
+    header.querySelector('span').textContent = active ? (state.sortDirection === 'asc' ? '↑' : '↓') : '↕';
   });
 }
-
-function closeModal() {
-  $('mdOverlay').classList.remove('open');
-  $('mdSearch').value = '';
+function renderResults() {
+  const filtered = filterModels(state.catalog, state);
+  const shown = sortModels(filtered, state).slice(0, RENDER_LIMIT);
+  $('mdTableBody').replaceChildren(...shown.map(createModelRow));
+  $('mdEmpty').hidden = shown.length > 0;
+  $('mdEmpty').textContent = shown.length ? '' : '没有匹配当前搜索和筛选条件的模型。';
+  $('mdStatus').textContent = `匹配 ${filtered.length} / 总计 ${state.catalog.length} 个模型 · USD / 1M tokens · 来源 models.dev${filtered.length > shown.length ? ` · 当前显示前 ${shown.length} 个` : ''}`;
+  renderSortHeaders();
 }
-
-function selectModel(id) {
-  const model = catalogList.find((item) => item.id === id);
-  if (!model || model.priceInput === null || model.priceOutput === null) return;
-  selectCallback(legacyModel(model));
-  closeModal();
+function renderControls() {
+  $('mdSearch').value = state.query;
+  $('mdCacheFilter').value = state.cacheFilter;
+  renderProviderMenu(); renderResults();
 }
+function setSort(sortKey) {
+  if (state.sortKey === sortKey) state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+  else { state.sortKey = sortKey; state.sortDirection = 'asc'; }
+  renderResults();
+}
+function loadCatalog() {
+  if (state.catalog.length) return Promise.resolve(state.catalog);
+  if (catalogPromise) return catalogPromise;
+  state.loading = true;
+  catalogPromise = fetch('https://models.dev/catalog.json', { cache: 'no-cache' })
+    .then((response) => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
+    .then((catalog) => { state.catalog = normalizeCatalog(catalog); return state.catalog; })
+    .catch((error) => { catalogPromise = null; state.error = error; throw error; })
+    .finally(() => { state.loading = false; });
+  return catalogPromise;
+}
+function openModal() {
+  $('mdOverlay').classList.add('open');
+  resetViewState();
+  $('mdStatus').textContent = '正在从 models.dev 拉取最新模型与价格…';
+  loadCatalog().then(() => { renderControls(); $('mdSearch').focus(); }).catch((error) => { $('mdStatus').textContent = `加载失败：${error.message}`; });
+}
+function closeModal() { $('mdOverlay').classList.remove('open'); resetViewState(); }
+function selectRow(modelId) { state.selectedModelId = modelId; renderResults(); }
 
 export function setupModelsDevBrowser({ onSelect }) {
   selectCallback = onSelect;
   $('loadModelsDev').addEventListener('click', openModal);
   $('mdClose').addEventListener('click', closeModal);
-  $('mdOverlay').addEventListener('click', (event) => {
-    if (event.target === $('mdOverlay')) closeModal();
+  $('mdOverlay').addEventListener('click', (event) => { if (event.target === $('mdOverlay')) closeModal(); });
+  let timer = null;
+  $('mdSearch').addEventListener('input', (event) => { clearTimeout(timer); const query = event.target.value; timer = setTimeout(() => { state.query = query; state.selectedModelId = null; renderResults(); }, 120); });
+  $('mdProviderMenu').addEventListener('change', (event) => {
+    if (!event.target.matches('input[type="checkbox"]')) return;
+    if (event.target.checked) state.selectedProviders.add(event.target.value); else state.selectedProviders.delete(event.target.value);
+    state.selectedModelId = null; renderProviderMenu(); renderResults();
   });
-  let searchTimer = null;
-  $('mdSearch').addEventListener('input', (event) => {
-    clearTimeout(searchTimer);
-    const query = event.target.value;
-    searchTimer = setTimeout(() => renderResults(query), 120);
-  });
-  $('mdList').addEventListener('click', (event) => {
-    const row = event.target.closest('.md-row');
-    if (row) selectModel(row.dataset.id);
-  });
-  $('mdList').addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && event.target.classList.contains('md-row')) selectModel(event.target.dataset.id);
-  });
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && $('mdOverlay').classList.contains('open')) closeModal();
-  });
+  $('mdCacheFilter').addEventListener('change', (event) => { state.cacheFilter = event.target.value; state.selectedModelId = null; renderResults(); });
+  $('mdClearFilters').addEventListener('click', () => { resetViewState(); renderControls(); });
+  document.querySelector('.md-table thead').addEventListener('click', (event) => { const header = event.target.closest('th[data-sort-key]'); if (header) setSort(header.dataset.sortKey); });
+  $('mdTableBody').addEventListener('click', (event) => { const row = event.target.closest('tr[data-model-id]'); if (row) selectRow(row.dataset.modelId); });
+  $('mdTableBody').addEventListener('keydown', (event) => { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('tr[data-model-id]')) { event.preventDefault(); selectRow(event.target.dataset.modelId); } });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && $('mdOverlay').classList.contains('open')) closeModal(); });
 }
