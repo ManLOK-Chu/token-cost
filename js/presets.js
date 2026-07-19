@@ -3,20 +3,22 @@ import { $, formatExactPrice } from './dom.js';
 let pricingPresets = [];
 let visibleModels = new Set();
 
-const MODEL_STYLES = [
-  { color: '#3b82f6', dasharray: 'none', width: 4 },
-  { color: '#f97316', dasharray: '8 4', width: 3 },
-  { color: '#22c55e', dasharray: '4 4', width: 3 },
-  { color: '#ef4444', dasharray: '12 4 4 4', width: 3 },
-  { color: '#a855f7', dasharray: '3 3', width: 3 },
-  { color: '#06b6d4', dasharray: '6 2 2 2', width: 3 },
-  { color: '#ec4899', dasharray: '10 3', width: 3 },
-  { color: '#84cc16', dasharray: '2 2', width: 3 },
-  { color: '#f59e0b', dasharray: '8 2 4 2', width: 3 },
+const MODEL_COLORS = [
+  'var(--viz-series-1)',
+  'var(--viz-series-2)',
+  'var(--viz-series-3)',
+  'var(--viz-series-4)',
+  'var(--viz-series-5)',
+  'var(--viz-series-6)',
 ];
+const MODEL_DASH_PATTERNS = ['none', '8 4', '3 4'];
 
 export function getModelStyle(index) {
-  return MODEL_STYLES[index % MODEL_STYLES.length];
+  return {
+    color: MODEL_COLORS[index % MODEL_COLORS.length],
+    dasharray: MODEL_DASH_PATTERNS[Math.floor(index / MODEL_COLORS.length) % MODEL_DASH_PATTERNS.length],
+    width: 3,
+  };
 }
 
 export async function loadPricingPresets() {
