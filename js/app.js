@@ -17,7 +17,19 @@ import {
 } from './presets.js';
 import { setupModelsDevBrowser } from './models-dev.js';
 
-const DEFAULT_PRESET_ID = 'gpt55';
+const DEFAULT_PRESET_ID = 'gpt-5.5';
+const LEGACY_PRESET_IDS = {
+  gpt55: 'gpt-5.5',
+  gpt56sol: 'gpt-5.6-sol',
+  gpt56terra: 'gpt-5.6-terra',
+  gpt56luna: 'gpt-5.6-luna',
+  'claude-opus-48': 'claude-opus-5',
+  'claude-opus-4-8': 'claude-opus-5',
+  'claude-sonnet-46': 'claude-sonnet-5',
+  'claude-sonnet-4-6': 'claude-sonnet-5',
+  'glm-52': 'glm-5.2',
+  'cursor-composer-25': 'cursor-composer-2.5',
+};
 const TOKEN_FIELDS = ['tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate'];
 const FORM_FIELDS = [
   'priceNew', 'priceOut', 'priceHit', 'priceCreate',
@@ -27,6 +39,10 @@ const FORM_FIELDS = [
 
 function getSystemTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function migratePresetId(id) {
+  return LEGACY_PRESET_IDS[id] || id;
 }
 
 function applyTheme(theme) {
@@ -55,8 +71,10 @@ function saveToStorage() {
   TOKEN_FIELDS.forEach((id) => { saved[id] = $(id).value; });
   saved.multiplier = $('multiplier').value;
   const selectedPreset = $('pricingPreset').value;
-  saved.pricingPreset = selectedPreset.startsWith('md-') ? DEFAULT_PRESET_ID : selectedPreset;
-  saved.visibleModels = Array.from(getVisibleModels()).filter((id) => !id.startsWith('md-'));
+  saved.pricingPreset = selectedPreset.startsWith('md-') ? DEFAULT_PRESET_ID : migratePresetId(selectedPreset);
+  saved.visibleModels = Array.from(getVisibleModels())
+    .filter((id) => !id.startsWith('md-'))
+    .map(migratePresetId);
   saveCalculatorState(saved);
 }
 
@@ -78,6 +96,7 @@ function applyModelsDevModel(model) {
   const preset = registerRuntimePreset({
     id: model.id,
     name: `${model.providerName} · ${model.name}`,
+    vendor: model.providerName,
     priceNew: model.priceInput,
     priceOut: model.priceOutput,
     priceHit: model.priceCacheRead ?? 0,
@@ -110,9 +129,10 @@ async function init() {
   const saved = loadCalculatorState();
   initPricingPresets(DEFAULT_PRESET_ID);
 
-  if (saved.pricingPreset && findPricingPreset(saved.pricingPreset)) {
-    $('pricingPreset').value = saved.pricingPreset;
-    applyPricingPreset(saved.pricingPreset);
+  const savedPresetId = migratePresetId(saved.pricingPreset);
+  if (savedPresetId && findPricingPreset(savedPresetId)) {
+    $('pricingPreset').value = savedPresetId;
+    applyPricingPreset(savedPresetId);
   }
   TOKEN_FIELDS.forEach((id) => {
     if (saved[id] !== undefined && saved[id] !== '') $(id).value = saved[id];
@@ -120,7 +140,10 @@ async function init() {
   if (saved.multiplier !== undefined && saved.multiplier !== '') $('multiplier').value = saved.multiplier;
 
   renderPricingTable();
-  initModelSelector($('pricingPreset').value, saved.visibleModels, update);
+  const savedVisibleModels = Array.isArray(saved.visibleModels)
+    ? saved.visibleModels.map(migratePresetId)
+    : saved.visibleModels;
+  initModelSelector($('pricingPreset').value, savedVisibleModels, update);
   setupModelsDevBrowser({ onSelect: applyModelsDevModel });
   registerFormListeners();
   update();

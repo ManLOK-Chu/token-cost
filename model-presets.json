@@ -5,8 +5,9 @@
     "note": "不会覆盖当前输入框，适合填写你的实际账单价格。"
   },
   {
-    "id": "gpt55",
+    "id": "gpt-5.5",
     "name": "GPT-5.5",
+    "vendor": "OpenAI",
     "priceNew": 5,
     "priceOut": 30,
     "priceHit": 0.5,
@@ -14,8 +15,9 @@
     "note": "按你提供的价格预填。无缓存创建成本。"
   },
   {
-    "id": "gpt56sol",
+    "id": "gpt-5.6-sol",
     "name": "GPT-5.6 Sol",
+    "vendor": "OpenAI",
     "priceNew": 5,
     "priceOut": 30,
     "priceHit": 0.5,
@@ -23,8 +25,9 @@
     "note": "参考价：输入 $5/M、输出 $30/M；缓存读取 $0.5/M (输入价 10%)、缓存写入 $6.25/M (输入价 1.25×)。请以官方价格页为准。"
   },
   {
-    "id": "gpt56terra",
+    "id": "gpt-5.6-terra",
     "name": "GPT-5.6 Terra",
+    "vendor": "OpenAI",
     "priceNew": 2.5,
     "priceOut": 15,
     "priceHit": 0.25,
@@ -32,8 +35,9 @@
     "note": "参考价：输入 $2.50/M、输出 $15/M；缓存读取 $0.25/M (输入价 10%)、缓存写入 $3.125/M (输入价 1.25×)。请以官方价格页为准。"
   },
   {
-    "id": "gpt56luna",
+    "id": "gpt-5.6-luna",
     "name": "GPT-5.6 Luna",
+    "vendor": "OpenAI",
     "priceNew": 1,
     "priceOut": 6,
     "priceHit": 0.1,
@@ -41,26 +45,9 @@
     "note": "参考价：输入 $1/M、输出 $6/M；缓存读取 $0.1/M (输入价 10%)、缓存写入 $1.25/M (输入价 1.25×)。请以官方价格页为准。"
   },
   {
-    "id": "gpt54",
-    "name": "GPT-5.4",
-    "priceNew": 2.5,
-    "priceOut": 15,
-    "priceHit": 0.25,
-    "priceCreate": 0,
-    "note": "参考价：输入 $2.50/M、输出 $15/M；缓存读取 $0.25/M。无缓存创建成本。请以官方价格页为准。"
-  },
-  {
-    "id": "gpt54-mini",
-    "name": "GPT-5.4 Mini",
-    "priceNew": 0.75,
-    "priceOut": 4.5,
-    "priceHit": 0.075,
-    "priceCreate": 0,
-    "note": "参考价：输入 $0.75/M、输出 $4.50/M；缓存读取 $0.075/M。无缓存创建成本。请以官方价格页为准。"
-  },
-  {
-    "id": "claude-opus-48",
-    "name": "Claude Opus 4.8",
+    "id": "claude-opus-5",
+    "name": "Claude Opus 5",
+    "vendor": "Anthropic",
     "priceNew": 5,
     "priceOut": 25,
     "priceHit": 0.5,
@@ -68,17 +55,9 @@
     "note": "参考价：输入 $5/M、输出 $25/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。"
   },
   {
-    "id": "claude-sonnet-46",
-    "name": "Claude Sonnet 4.6",
-    "priceNew": 3,
-    "priceOut": 15,
-    "priceHit": 0.3,
-    "priceCreate": 3.75,
-    "note": "参考价：输入 $3/M、输出 $15/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。"
-  },
-  {
     "id": "claude-fable-5",
     "name": "Claude Fable 5",
+    "vendor": "Anthropic",
     "priceNew": 10,
     "priceOut": 50,
     "priceHit": 1,
@@ -86,8 +65,29 @@
     "note": "参考价：输入 $10/M、输出 $50/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。"
   },
   {
+    "id": "grok-4.5",
+    "name": "Grok 4.5",
+    "vendor": "xAI",
+    "priceNew": 2,
+    "priceOut": 6,
+    "priceHit": 0.3,
+    "priceCreate": 0,
+    "note": "参考价：输入 $2/M、输出 $6/M；缓存读取 $0.3/M。目录未提供缓存写入价，暂按 $0 填充。请以官方价格页为准。"
+  },
+  {
+    "id": "kimi-k3",
+    "name": "Kimi K3",
+    "vendor": "Kimi",
+    "priceNew": 3,
+    "priceOut": 15,
+    "priceHit": 0.3,
+    "priceCreate": 3,
+    "note": "参考价：输入 $3/M、输出 $15/M；缓存读取 $0.3/M、缓存写入 $3/M。请以官方价格页为准。"
+  },
+  {
     "id": "deepseek-v4-pro",
     "name": "DeepSeek V4 Pro",
+    "vendor": "DeepSeek",
     "priceNew": 0.435,
     "priceOut": 0.87,
     "priceHit": 0.003625,
@@ -97,6 +97,7 @@
   {
     "id": "deepseek-v4-flash",
     "name": "DeepSeek V4 Flash",
+    "vendor": "DeepSeek",
     "priceNew": 0.14,
     "priceOut": 0.28,
     "priceHit": 0.0028,
@@ -104,8 +105,9 @@
     "note": "参考价：输入 $0.14/M、输出 $0.28/M；缓存命中约输入价的 2%。无缓存创建成本。性价比极高。"
   },
   {
-    "id": "glm-52",
+    "id": "glm-5.2",
     "name": "GLM-5.2",
+    "vendor": "智谱",
     "priceNew": 1.4,
     "priceOut": 4.4,
     "priceHit": 0.26,
@@ -113,26 +115,9 @@
     "note": "参考价：输入 $1.40/M、输出 $4.40/M；智谱旗舰模型，支持 1M 上下文。无缓存创建成本。请以官方价格页为准。"
   },
   {
-    "id": "mimo-v25",
-    "name": "MiMo V2.5",
-    "priceNew": 0.14,
-    "priceOut": 0.28,
-    "priceHit": 0.0028,
-    "priceCreate": 0,
-    "note": "参考价：输入 $0.14/M、输出 $0.28/M；缓存命中约输入价的 2%。无缓存创建成本。请以官方价格页为准。"
-  },
-  {
-    "id": "mimo-v25-pro",
-    "name": "MiMo V2.5 Pro",
-    "priceNew": 0.435,
-    "priceOut": 0.87,
-    "priceHit": 0.0036,
-    "priceCreate": 0,
-    "note": "参考价：输入 $0.435/M、输出 $0.87/M；缓存命中约输入价的 0.8%。无缓存创建成本。请以官方价格页为准。"
-  },
-  {
-    "id": "cursor-composer-25",
-    "name": "Cursor Composer 2.5",
+    "id": "cursor-composer-2.5",
+    "name": "Composer 2.5",
+    "vendor": "Cursor",
     "priceNew": 0.5,
     "priceOut": 2.5,
     "priceHit": 0.2,
@@ -142,6 +127,7 @@
   {
     "id": "claude-sonnet-5",
     "name": "Claude Sonnet 5",
+    "vendor": "Anthropic",
     "priceNew": 3,
     "priceOut": 15,
     "priceHit": 0.3,

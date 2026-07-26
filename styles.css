@@ -737,15 +737,18 @@ footer a:hover {
 
 .pricing-table {
   width: 100%;
+  min-width: 820px;
   border-collapse: collapse;
   font-size: 14px;
+  table-layout: fixed;
 }
 
 .pricing-table th,
 .pricing-table td {
-  padding: 14px 18px;
+  padding: 11px 16px;
   text-align: left;
   border-bottom: 1px solid var(--soft-line);
+  line-height: 1.35;
   white-space: nowrap;
 }
 
@@ -754,34 +757,122 @@ footer a:hover {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
+}
+
+.pricing-table th:first-child,
+.pricing-table td:first-child {
+  width: 28%;
+}
+
+.pricing-table th:nth-child(2),
+.pricing-table td:nth-child(2) {
+  width: 15%;
+}
+
+.pricing-table th:nth-child(n + 3),
+.pricing-table td:nth-child(n + 3) {
+  width: 14.25%;
+  text-align: right;
 }
 
 .pricing-table tbody tr:last-child td {
   border-bottom: none;
 }
 
+.pricing-table tbody tr:nth-child(even) {
+  background: rgba(59, 130, 246, 0.025);
+}
+
+.pricing-table tbody tr.pricing-vendor-openai {
+  background: rgba(37, 99, 235, 0.07);
+}
+
+.pricing-table tbody tr.pricing-vendor-anthropic {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.pricing-table tbody tr.pricing-vendor-xai {
+  background: rgba(71, 85, 105, 0.07);
+}
+
+.pricing-table tbody tr.pricing-vendor-kimi {
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.pricing-table tbody tr.pricing-vendor-deepseek {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.pricing-table tbody tr.pricing-vendor-zhipu {
+  background: rgba(139, 92, 246, 0.07);
+}
+
+.pricing-table tbody tr.pricing-vendor-cursor {
+  background: rgba(234, 88, 12, 0.08);
+}
+
+.pricing-table tbody tr.pricing-vendor-other {
+  background: rgba(100, 116, 139, 0.05);
+}
+
 .pricing-table tbody tr:hover {
   background: rgba(59, 130, 246, 0.03);
+}
+
+:root.dark-mode .pricing-table tbody tr:nth-child(even) {
+  background: rgba(59, 130, 246, 0.045);
+}
+
+:root.dark-mode .pricing-table tbody tr.pricing-vendor-openai {
+  background: rgba(96, 165, 250, 0.12);
+}
+
+:root.dark-mode .pricing-table tbody tr.pricing-vendor-anthropic {
+  background: rgba(251, 191, 36, 0.12);
+}
+
+:root.dark-mode .pricing-table tbody tr.pricing-vendor-xai {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+:root.dark-mode .pricing-table tbody tr.pricing-vendor-kimi {
+  background: rgba(34, 211, 238, 0.12);
+}
+
+:root.dark-mode .pricing-table tbody tr.pricing-vendor-deepseek {
+  background: rgba(52, 211, 153, 0.12);
+}
+
+:root.dark-mode .pricing-table tbody tr.pricing-vendor-zhipu {
+  background: rgba(192, 132, 252, 0.12);
+}
+
+:root.dark-mode .pricing-table tbody tr.pricing-vendor-cursor {
+  background: rgba(251, 146, 60, 0.12);
+}
+
+:root.dark-mode .pricing-table tbody tr.pricing-vendor-other {
+  background: rgba(148, 163, 184, 0.08);
 }
 
 :root.dark-mode .pricing-table tbody tr:hover {
   background: rgba(59, 130, 246, 0.08);
 }
 
-.pricing-table td:first-child {
+.pricing-table .pricing-model-name {
   font-weight: 650;
   color: var(--text);
 }
 
-.pricing-table td:not(:first-child) {
-  font-variant-numeric: tabular-nums;
-  color: #344054;
+.pricing-table .pricing-vendor {
+  color: var(--muted);
+  font-size: 13px;
 }
 
-:root.dark-mode .pricing-table td:not(:first-child) {
-  color: #d1d5db;
+.pricing-table .pricing-number {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .price-zero {

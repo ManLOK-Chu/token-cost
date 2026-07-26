@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="比较 API 模型在不同缓存命中率下的 token 成本，并浏览 models.dev 模型价格。">
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 64x64">
   <title>API Token 计费模拟器</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -137,11 +138,12 @@
         <table class="pricing-table">
           <thead>
             <tr>
-              <th>模型</th>
-              <th>输入 ($/M)</th>
-              <th>输出 ($/M)</th>
-              <th>缓存命中 ($/M)</th>
-              <th>缓存创建 ($/M)</th>
+              <th scope="col">模型</th>
+              <th scope="col">厂商</th>
+              <th scope="col">输入 ($/M)</th>
+              <th scope="col">输出 ($/M)</th>
+              <th scope="col">缓存命中 ($/M)</th>
+              <th scope="col">缓存创建 ($/M)</th>
             </tr>
           </thead>
           <tbody id="pricingTableBody">

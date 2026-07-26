@@ -12,6 +12,19 @@ const MODEL_COLORS = [
   'var(--viz-series-6)',
 ];
 const MODEL_DASH_PATTERNS = ['none', '8 4', '3 4'];
+const VENDOR_ROW_CLASSES = new Map([
+  ['OpenAI', 'openai'],
+  ['Anthropic', 'anthropic'],
+  ['xAI', 'xai'],
+  ['Kimi', 'kimi'],
+  ['DeepSeek', 'deepseek'],
+  ['智谱', 'zhipu'],
+  ['Cursor', 'cursor'],
+]);
+
+function vendorRowClass(vendor) {
+  return `pricing-vendor-${VENDOR_ROW_CLASSES.get(vendor) || 'other'}`;
+}
 
 export function getModelStyle(index) {
   return {
@@ -136,15 +149,22 @@ export function renderPricingTable() {
   const tbody = $('pricingTableBody');
   const models = pricingPresets
     .filter((preset) => preset.id !== 'custom')
-    .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    .sort((a, b) => {
+      const vendorA = a.vendor || a.providerName || '';
+      const vendorB = b.vendor || b.providerName || '';
+      return vendorA.localeCompare(vendorB, 'zh-CN') || a.name.localeCompare(b.name, 'zh-CN');
+    });
 
   tbody.replaceChildren(...models.map((preset) => {
+    const vendor = preset.vendor || preset.providerName || '—';
     const row = document.createElement('tr');
-    const values = [preset.name, preset.priceNew, preset.priceOut, preset.priceHit, preset.priceCreate];
+    row.className = `pricing-vendor-row ${vendorRowClass(vendor)}`;
+    const values = [preset.name, vendor, preset.priceNew, preset.priceOut, preset.priceHit, preset.priceCreate];
     values.forEach((value, index) => {
       const cell = document.createElement('td');
-      cell.textContent = index === 0 ? value : formatExactPrice(value);
-      if (index > 0 && value === 0) cell.className = 'price-zero';
+      cell.textContent = index < 2 ? value : formatExactPrice(value);
+      cell.className = index === 0 ? 'pricing-model-name' : index === 1 ? 'pricing-vendor' : 'pricing-number';
+      if (index >= 2 && value === 0) cell.classList.add('price-zero');
       row.appendChild(cell);
     });
     return row;
