@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>分组成本、SVIP 与另一家对比</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f2933;
+        --muted: #64748b;
+        --line: #d9e1e8;
+        --canvas: #f7fafc;
+        --paper: #ffffff;
+        --mint: #087e6b;
+        --mint-soft: #e6f6f1;
+        --orange: #cf5e15;
+        --orange-soft: #fff1e7;
+        --blue: #2563a7;
+        --blue-soft: #eaf2fb;
+        --red: #ad343e;
+        --focus: #193a6a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background: #f1f5f7;
+        color: var(--ink);
+      }
+
+      main {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 40px 0 52px;
+      }
+
+      .masthead {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        padding-bottom: 26px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .eyebrow {
+        margin: 0 0 9px;
+        color: var(--mint);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 31px;
+        line-height: 1.18;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        max-width: 690px;
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.65;
+      }
+
+      .ratios {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(116px, 1fr));
+        gap: 10px;
+        min-width: 380px;
+      }
+
+      .ratio {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--paper);
+      }
+
+      .ratio span,
+      .metric-label,
+      .small-label {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .ratio strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .ratio.standard strong { color: var(--orange); }
+      .ratio.svip strong { color: var(--mint); }
+      .ratio.other strong { color: var(--red); }
+
+      .comparison-picker {
+        display: grid;
+        grid-template-columns: 1fr 34px 1fr;
+        gap: 14px;
+        align-items: end;
+        margin: 24px 0;
+        padding: 18px 20px;
+        border-top: 3px solid var(--blue);
+        background: var(--paper);
+      }
+
+      .picker-field { min-width: 0; }
+
+      .picker-field label {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .picker-field small {
+        display: block;
+        min-height: 18px;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      select {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid #bdc9d4;
+        border-radius: 5px;
+        padding: 0 34px 0 11px;
+        background: var(--paper);
+        color: var(--ink);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      select:focus-visible {
+        outline: 3px solid rgb(37 99 167 / 28%);
+        outline-offset: 2px;
+      }
+
+      .compare-mark {
+        display: grid;
+        place-items: center;
+        height: 42px;
+        color: var(--muted);
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .picker-note {
+        grid-column: 1 / -1;
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .key-result {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr 1fr;
+        gap: 1px;
+        margin: 24px 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--line);
+      }
+
+      .key-result article {
+        min-height: 134px;
+        padding: 19px 20px;
+        background: var(--paper);
+      }
+
+      .key-result article:first-child { background: #f0faf7; }
+
+      .key-result h2 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 740;
+      }
+
+      .result-number {
+        margin: 10px 0 4px;
+        color: var(--mint);
+        font-size: 35px;
+        font-weight: 780;
+        line-height: 1;
+      }
+
+      .result-number.is-loss { color: var(--red); }
+
+      .result-copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .chart-section {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--paper);
+      }
+
+      .chart-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      .chart-head h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .chart-head p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .mode-switch {
+        display: inline-flex;
+        flex: 0 0 auto;
+        padding: 3px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #f7fafc;
+      }
+
+      .mode-switch button {
+        min-height: 32px;
+        border: 0;
+        border-radius: 4px;
+        padding: 0 11px;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .mode-switch button[aria-pressed="true"] {
+        background: var(--paper);
+        color: var(--ink);
+        box-shadow: 0 1px 3px rgb(31 41 51 / 14%);
+      }
+
+      .mode-switch button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgb(37 99 167 / 28%);
+        outline-offset: 2px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 18px;
+        margin-bottom: 10px;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .legend-line {
+        width: 22px;
+        height: 3px;
+        border-radius: 3px;
+      }
+
+      .legend-line.standard { background: var(--orange); }
+      .legend-line.svip { background: var(--mint); }
+      .legend-line.other { background: var(--red); }
+      .legend-line.marker {
+        width: 3px;
+        height: 17px;
+        background: var(--blue);
+      }
+
+      .chart-wrap {
+        position: relative;
+        min-height: 380px;
+        border: 1px solid var(--line);
+        background: var(--canvas);
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 380px;
+        cursor: crosshair;
+      }
+
+      .tooltip {
+        position: absolute;
+        z-index: 1;
+        width: max-content;
+        max-width: 220px;
+        padding: 10px 11px;
+        border: 1px solid #bcc9d5;
+        border-radius: 5px;
+        background: rgb(255 255 255 / 96%);
+        box-shadow: 0 3px 13px rgb(31 41 51 / 12%);
+        color: var(--ink);
+        font-size: 12px;
+        line-height: 1.55;
+        pointer-events: none;
+        transform: translate(10px, -100%);
+      }
+
+      .tooltip[hidden] { display: none; }
+      .tooltip strong { display: block; margin-bottom: 3px; }
+
+      .control-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 22px;
+        align-items: center;
+        margin-top: 20px;
+      }
+
+      .range-control label {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .range-control output {
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        height: 22px;
+        margin: 8px 0 0;
+        accent-color: var(--blue);
+        cursor: pointer;
+      }
+
+      .live-comparison {
+        min-width: 270px;
+        padding: 13px 15px;
+        border-left: 3px solid var(--blue);
+        background: var(--blue-soft);
+      }
+
+      .live-comparison p { margin: 4px 0 0; font-size: 13px; line-height: 1.45; }
+      .live-comparison strong { color: var(--blue); font-variant-numeric: tabular-nums; }
+
+      .details {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+        gap: 24px;
+        margin-top: 24px;
+      }
+
+      .details section {
+        padding: 20px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .details h2 { margin: 0 0 12px; font-size: 17px; }
+
+      .assumptions {
+        display: grid;
+        gap: 9px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .assumptions li {
+        position: relative;
+        padding-left: 16px;
+        color: #455566;
+        font-size: 13px;
+        line-height: 1.58;
+      }
+
+      .assumptions li::before {
+        position: absolute;
+        left: 0;
+        color: var(--mint);
+        content: "•";
+        font-weight: 900;
+      }
+
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+      th:first-child, td:first-child { text-align: left; }
+      th { color: var(--muted); font-size: 12px; font-weight: 720; }
+      td { font-variant-numeric: tabular-nums; }
+      .save { color: var(--mint); font-weight: 760; }
+
+      .scenario-table-wrap { overflow-x: auto; }
+
+      .method {
+        margin: 13px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .method code {
+        padding: 1px 4px;
+        background: #eaf0f4;
+        color: #3e4d5b;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      @media (max-width: 760px) {
+        main { width: min(100% - 24px, 1180px); padding-top: 24px; }
+        .masthead, .chart-head { align-items: stretch; flex-direction: column; }
+        .ratios { min-width: 0; }
+        .key-result { grid-template-columns: 1fr; }
+        .comparison-picker { grid-template-columns: 1fr; gap: 12px; padding: 15px; }
+        .compare-mark { display: none; }
+        .key-result article { min-height: auto; }
+        .chart-section { padding: 14px; }
+        .chart-wrap, canvas { min-height: 320px; height: 320px; }
+        .control-row, .details { grid-template-columns: 1fr; gap: 16px; }
+        .live-comparison { min-width: 0; }
+        .mode-switch { width: 100%; }
+        .mode-switch button { flex: 1; }
+        h1 { font-size: 27px; }
+        .result-number { font-size: 31px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">同一模型工作量的累计成本对比</p>
+          <h1>分组成本、SVIP 与另一家对比</h1>
+          <p class="subtitle" id="match-subtitle"></p>
+        </div>
+        <div class="ratios" aria-label="本次计算的分组系数">
+          <div class="ratio standard">
+            <span id="standard-ratio-label">普通用户 · GPT Codex 全家桶</span>
+            <strong id="standard-ratio-value">1.50x</strong>
+          </div>
+          <div class="ratio svip">
+            <span id="svip-ratio-label">SVIP · SVIP专属GPT</span>
+            <strong id="svip-ratio-value">0.34x</strong>
+          </div>
+          <div class="ratio other">
+            <span id="other-ratio-label">另一家 · 充值 10x</span>
+            <strong id="other-ratio-value">2x</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="comparison-picker" aria-label="选择对比的分组">
+        <div class="picker-field">
+          <label for="standard-group">普通用户分组</label>
+          <select id="standard-group"></select>
+          <small>仅列出普通用户可调用的分组。</small>
+        </div>
+        <div class="compare-mark" aria-hidden="true">vs</div>
+        <div class="picker-field">
+          <label for="svip-group">SVIP 分组</label>
+          <select id="svip-group"></select>
+          <small>SVIP 可选择所有当前快照中的分组。</small>
+        </div>
+        <p class="picker-note">系数来自你提供的带登录态与不带登录态接口快照。<code>svip</code> 与 <code>SVIP专属GPT</code> 不会出现在普通用户选择器中；另一家固定按消费系数 2x、充值倍率 10x 计算。</p>
+      </section>
+
+      <section class="key-result" aria-label="结论">
+        <article>
+          <h2>经济成本平衡点</h2>
+          <p class="result-number" id="economic-break-number">¥291</p>
+          <p class="result-copy" id="economic-break-copy"></p>
+        </article>
+        <article>
+          <h2>现金支出平衡点</h2>
+          <p class="result-number" id="cash-break-number">¥300</p>
+          <p class="result-copy" id="cash-break-copy"></p>
+        </article>
+        <article>
+          <h2>另一家后续成本</h2>
+          <p class="result-number" id="other-marginal-number">-46.7%</p>
+          <p class="result-copy" id="other-marginal-copy"></p>
+        </article>
+      </section>
+
+      <section class="chart-section" aria-labelledby="chart-title">
+        <div class="chart-head">
+          <div>
+            <h2 id="chart-title">累计成本曲线</h2>
+            <p id="chart-description">经济成本会扣除尚未消费的账户额度价值，适合判断长期是否值得开通。</p>
+          </div>
+          <div class="mode-switch" aria-label="成本口径">
+            <button type="button" data-mode="economic" aria-pressed="true">经济成本</button>
+            <button type="button" data-mode="cash" aria-pressed="false">现金支出</button>
+          </div>
+        </div>
+
+        <div class="legend" aria-hidden="true">
+          <span class="legend-item"><i class="legend-line standard"></i><span id="standard-legend">普通用户 · GPT Codex 全家桶</span></span>
+          <span class="legend-item"><i class="legend-line svip"></i><span id="svip-legend">SVIP · SVIP专属GPT</span></span>
+          <span class="legend-item"><i class="legend-line other"></i><span id="other-legend">另一家 · 2x / 充值 10x</span></span>
+          <span class="legend-item"><i class="legend-line marker"></i><span id="break-label">经济平衡点 ¥291</span></span>
+        </div>
+
+        <div class="chart-wrap" id="chart-wrap">
+          <canvas id="cost-chart" aria-label="普通用户和 SVIP 的累计成本折线图" role="img"></canvas>
+          <div class="tooltip" id="tooltip" hidden></div>
+        </div>
+
+        <div class="control-row">
+          <div class="range-control">
+            <label for="spend-range">
+              <span id="range-label">查看普通用户的等效累计消费</span>
+              <output id="spend-output" for="spend-range">¥600</output>
+            </label>
+            <input id="spend-range" type="range" min="0" max="1800" step="10" value="600" />
+          </div>
+          <aside class="live-comparison" aria-live="polite">
+            <span class="small-label">当前同等工作量</span>
+            <p id="live-copy"></p>
+          </aside>
+        </div>
+      </section>
+
+      <div class="details">
+        <section>
+          <h2>平衡点如何得出</h2>
+          <ul class="assumptions">
+            <li id="ratio-assumption"></li>
+            <li>普通用户和 SVIP 都按 1 元充值获得 4 额度计算，因此两者的充值倍率在后续消耗中相互抵消。</li>
+            <li>SVIP 开通费为 ¥300，其中包含 300 可消费额度。以普通充值价值折算，这 300 额度价值 ¥75，净会员成本为 ¥225。</li>
+            <li id="savings-assumption"></li>
+            <li id="other-assumption"></li>
+          </ul>
+          <p class="method" id="formula"></p>
+        </section>
+
+        <section>
+          <h2>几个消费档位</h2>
+          <div class="scenario-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>普通方案等效消费</th>
+                  <th id="scenario-svip-heading">SVIP 经济成本</th>
+                  <th id="scenario-other-heading">另一家成本</th>
+                  <th id="scenario-lowest-heading">最低成本方案</th>
+                </tr>
+              </thead>
+              <tbody id="scenario-table"></tbody>
+            </table>
+          </div>
+          <p class="method" id="scenario-note"></p>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      (() => {
+        const MEMBERSHIP_CASH = 300;
+        const MEMBERSHIP_CREDIT = 300;
+        const RECHARGE_MULTIPLIER = 4;
+        const MEMBERSHIP_NET_COST = MEMBERSHIP_CASH - MEMBERSHIP_CREDIT / RECHARGE_MULTIPLIER;
+        const OTHER_PROVIDER = {
+          name: '另一家',
+          coefficient: 2,
+          rechargeMultiplier: 10,
+        };
+
+        // Ratio snapshots taken from the two pricing responses supplied in this conversation.
+        const GROUPS = [
+          { id: 'bedrock', name: 'BedRock', standard: 12, svip: 8.8 },
+          { id: 'cc-kiro-ultra', name: 'CC-Kiro-ultra', standard: 4, svip: 2 },
+          { id: 'cc-limited', name: 'CC限时满血特价', standard: 2, svip: 1 },
+          { id: 'openclaw', name: 'Claude Code Openclaw专属号池', standard: 5, svip: 3.96 },
+          { id: 'kiro-1', name: 'ClaudeCode Kiro-1', standard: 0.8, svip: 0.4 },
+          { id: 'gpt-codex', name: 'GPT Codex 全家桶', standard: 1.5, svip: 0.8 },
+          { id: 'github-copilot', name: 'Github-copilot', standard: 2.6, svip: 2.6 },
+          { id: 'openai-key', name: 'OpenAI官key', standard: 17, svip: 15.6 },
+          { id: 'svip-gpt', name: 'SVIP专属GPT', standard: null, svip: 0.34, svipOnly: true },
+          { id: 'vertex-claude', name: 'Vertex Claude官渠', standard: 11, svip: 9.4 },
+          { id: 'banana-pro', name: 'banana Pro 官转', standard: 2, svip: 1 },
+          { id: 'svip', name: 'svip', standard: null, svip: 0.5, svipOnly: true },
+          { id: 'bug-max', name: '【Bug】Claude code Max', standard: 0.8, svip: 0.8 },
+          { id: 'proxy-max', name: '【代理外接版】Claude code Max', standard: 6, svip: 4 },
+          { id: 'stable-max', name: '【稳定版】Claude code Max', standard: 7, svip: 3.2 },
+          { id: 'restricted-max', name: '【限制外接】Claude code Max', standard: 8, svip: 5 },
+          { id: 'public', name: '公益', standard: 0.3, svip: 0.2 },
+          { id: 'domestic', name: '国产Token计划', standard: 4, svip: 2 },
+          { id: 'overseas', name: '海外稳定模型分组', standard: 18, svip: 14 },
+        ];
+
+        const canvas = document.getElementById('cost-chart');
+        const context = canvas.getContext('2d');
+        const tooltip = document.getElementById('tooltip');
+        const range = document.getElementById('spend-range');
+        const rangeOutput = document.getElementById('spend-output');
+        const liveCopy = document.getElementById('live-copy');
+        const chartDescription = document.getElementById('chart-description');
+        const breakLabel = document.getElementById('break-label');
+        const scenarioTable = document.getElementById('scenario-table');
+        const buttons = [...document.querySelectorAll('[data-mode]')];
+        const standardSelect = document.getElementById('standard-group');
+        const svipSelect = document.getElementById('svip-group');
+        const subtitle = document.getElementById('match-subtitle');
+        const standardRatioLabel = document.getElementById('standard-ratio-label');
+        const standardRatioValue = document.getElementById('standard-ratio-value');
+        const svipRatioLabel = document.getElementById('svip-ratio-label');
+        const svipRatioValue = document.getElementById('svip-ratio-value');
+        const otherRatioLabel = document.getElementById('other-ratio-label');
+        const otherRatioValue = document.getElementById('other-ratio-value');
+        const standardLegend = document.getElementById('standard-legend');
+        const svipLegend = document.getElementById('svip-legend');
+        const otherLegend = document.getElementById('other-legend');
+        const rangeLabel = document.getElementById('range-label');
+        const economicBreakNumber = document.getElementById('economic-break-number');
+        const economicBreakCopy = document.getElementById('economic-break-copy');
+        const cashBreakNumber = document.getElementById('cash-break-number');
+        const cashBreakCopy = document.getElementById('cash-break-copy');
+        const otherMarginalNumber = document.getElementById('other-marginal-number');
+        const otherMarginalCopy = document.getElementById('other-marginal-copy');
+        const ratioAssumption = document.getElementById('ratio-assumption');
+        const savingsAssumption = document.getElementById('savings-assumption');
+        const otherAssumption = document.getElementById('other-assumption');
+        const formula = document.getElementById('formula');
+        const scenarioSvipHeading = document.getElementById('scenario-svip-heading');
+        const scenarioOtherHeading = document.getElementById('scenario-other-heading');
+        const scenarioLowestHeading = document.getElementById('scenario-lowest-heading');
+        const scenarioNote = document.getElementById('scenario-note');
+        let mode = 'economic';
+        let pointerSpend = null;
+
+        const money = (value, fraction = 0) =>
+          new Intl.NumberFormat('zh-CN', {
+            style: 'currency',
+            currency: 'CNY',
+            minimumFractionDigits: fraction,
+            maximumFractionDigits: fraction,
+          }).format(value);
+
+        const ratioText = (value) => `${Number(value.toFixed(2))}x`;
+
+        function getGroup(id) {
+          return GROUPS.find((group) => group.id === id);
+        }
+
+        function comparison() {
+          const standard = getGroup(standardSelect.value);
+          const svip = getGroup(svipSelect.value);
+          const variableRatio = svip.svip / standard.standard;
+          const otherRatio =
+            (OTHER_PROVIDER.coefficient / standard.standard) *
+            (RECHARGE_MULTIPLIER / OTHER_PROVIDER.rechargeMultiplier);
+          const svipCheaper = variableRatio < 1;
+          const economicBreakEven = svipCheaper
+            ? MEMBERSHIP_NET_COST / (1 - variableRatio)
+            : null;
+          const cashBreakEven = svipCheaper
+            ? Math.max(MEMBERSHIP_CASH, economicBreakEven)
+            : null;
+          return {
+            standard,
+            svip,
+            variableRatio,
+            otherRatio,
+            svipCheaper,
+            economicBreakEven,
+            cashBreakEven,
+          };
+        }
+
+        function economicSvipCost(normalSpend, current = comparison()) {
+          return MEMBERSHIP_NET_COST + normalSpend * current.variableRatio;
+        }
+
+        function cashSvipCost(normalSpend, current = comparison()) {
+          const neededCredits = normalSpend * current.variableRatio * RECHARGE_MULTIPLIER;
+          if (neededCredits <= MEMBERSHIP_CREDIT) return MEMBERSHIP_CASH;
+          return MEMBERSHIP_CASH + (neededCredits - MEMBERSHIP_CREDIT) / RECHARGE_MULTIPLIER;
+        }
+
+        function svipCost(normalSpend, current = comparison()) {
+          return mode === 'economic'
+            ? economicSvipCost(normalSpend, current)
+            : cashSvipCost(normalSpend, current);
+        }
+
+        function otherCost(normalSpend, current = comparison()) {
+          return normalSpend * current.otherRatio;
+        }
+
+        function populateSelects() {
+          const addOptions = (select, groups, ratioField) => {
+            const fragment = document.createDocumentFragment();
+            groups.forEach((group) => {
+              const option = document.createElement('option');
+              option.value = group.id;
+              option.textContent = `${group.name} · ${ratioText(group[ratioField])}`;
+              fragment.append(option);
+            });
+            select.replaceChildren(fragment);
+          };
+
+          addOptions(standardSelect, GROUPS.filter((group) => group.standard !== null), 'standard');
+          addOptions(svipSelect, GROUPS, 'svip');
+          standardSelect.value = 'gpt-codex';
+          svipSelect.value = 'svip-gpt';
+        }
+
+        function setResult(number, copy, value, text, isLoss = false) {
+          number.textContent = value;
+          number.classList.toggle('is-loss', isLoss);
+          copy.textContent = text;
+        }
+
+        function updateSummary() {
+          const current = comparison();
+          const standardName = current.standard.name;
+          const svipName = current.svip.name;
+
+          subtitle.innerHTML = `比较普通用户使用 <strong>${standardName}</strong>、开通 SVIP 后使用 <strong>${svipName}</strong>，以及<strong>${OTHER_PROVIDER.name}</strong>的同等模型工作量成本。`;
+          standardRatioLabel.textContent = `普通用户 · ${standardName}`;
+          standardRatioValue.textContent = ratioText(current.standard.standard);
+          svipRatioLabel.textContent = `SVIP · ${svipName}`;
+          svipRatioValue.textContent = ratioText(current.svip.svip);
+          otherRatioLabel.textContent = `${OTHER_PROVIDER.name} · 充值 ${OTHER_PROVIDER.rechargeMultiplier}x`;
+          otherRatioValue.textContent = ratioText(OTHER_PROVIDER.coefficient);
+          standardLegend.textContent = `普通用户 · ${standardName}`;
+          svipLegend.textContent = `SVIP · ${svipName}`;
+          otherLegend.textContent = `${OTHER_PROVIDER.name} · ${ratioText(OTHER_PROVIDER.coefficient)} / 充值 ${OTHER_PROVIDER.rechargeMultiplier}x`;
+          rangeLabel.textContent = `查看普通方案「${standardName}」的等效累计消费`;
+          canvas.setAttribute('aria-label', `普通用户 ${standardName}、SVIP ${svipName} 与${OTHER_PROVIDER.name}的累计成本折线图`);
+          ratioAssumption.innerHTML = `普通用户使用 <strong>${standardName}</strong> 的分组系数为 <strong>${ratioText(current.standard.standard)}</strong>；SVIP 使用 <strong>${svipName}</strong> 的系数为 <strong>${ratioText(current.svip.svip)}</strong>。`;
+
+          if (current.svipCheaper) {
+            setResult(
+              economicBreakNumber,
+              economicBreakCopy,
+              money(current.economicBreakEven),
+              `普通方案累计消费约 ${money(current.economicBreakEven)} 时，SVIP 的会员成本已被较低倍率抵消。`
+            );
+            setResult(
+              cashBreakNumber,
+              cashBreakCopy,
+              money(current.cashBreakEven),
+              `普通方案累计现金支出超过 ${money(current.cashBreakEven)} 后，SVIP 的现金支出更低。`
+            );
+            savingsAssumption.innerHTML = `每 ¥1 普通方案等效消费节省 <strong>¥${(1 - current.variableRatio).toFixed(4)}</strong>，约 ¥225 的净会员成本在 <strong>${money(current.economicBreakEven, 2)}</strong> 处收回。`;
+          } else {
+            setResult(
+              economicBreakNumber,
+              economicBreakCopy,
+              '不回本',
+              `${svipName} 的后续倍率不低于普通方案，无法通过消费抵消开通 SVIP 的净成本。`,
+              true
+            );
+            setResult(
+              cashBreakNumber,
+              cashBreakCopy,
+              '不回本',
+              `即使不计资金占用，所选 SVIP 分组也不会低于普通方案的累计现金支出。`,
+              true
+            );
+            savingsAssumption.innerHTML = `所选 SVIP 分组的变量成本比普通方案高 <strong>¥${(current.variableRatio - 1).toFixed(4)}</strong> / 每 ¥1 等效消费，会员成本不会收回。`;
+          }
+
+          const otherPercentage = Math.abs((1 - current.otherRatio) * 100);
+          const otherIsCheaper = current.otherRatio < 1;
+          setResult(
+            otherMarginalNumber,
+            otherMarginalCopy,
+            `${otherIsCheaper ? '-' : '+'}${otherPercentage.toFixed(1)}%`,
+            `${OTHER_PROVIDER.name} 的同等工作量成本是普通方案的 ${(current.otherRatio * 100).toFixed(1)}%，已计入 ${OTHER_PROVIDER.rechargeMultiplier}x 充值倍率。`,
+            !otherIsCheaper
+          );
+          otherAssumption.innerHTML = `${OTHER_PROVIDER.name} 消费系数为 <strong>${ratioText(OTHER_PROVIDER.coefficient)}</strong>，充值倍率为 <strong>${OTHER_PROVIDER.rechargeMultiplier}x</strong>；相对普通方案的成本比例为 <strong>${current.otherRatio.toFixed(4)}</strong>。`;
+          formula.innerHTML = `公式：<code>SVIP 经济成本 = 225 + 普通等效消费 × (${current.svip.svip} / ${current.standard.standard})</code>；<code>${OTHER_PROVIDER.name} 成本 = 普通等效消费 × (${OTHER_PROVIDER.coefficient} / ${current.standard.standard}) × (${RECHARGE_MULTIPLIER} / ${OTHER_PROVIDER.rechargeMultiplier})</code>。普通方案成本即为横轴金额。`;
+          scenarioSvipHeading.textContent = `${svipName} ${mode === 'economic' ? '经济成本' : '现金支出'}`;
+          scenarioOtherHeading.textContent = `${OTHER_PROVIDER.name} 成本`;
+          scenarioLowestHeading.textContent = '最低成本方案';
+          scenarioNote.textContent = `横轴金额表示同一工作量下，普通用户在「${standardName}」产生的实际消费；页面按所选 SVIP 分组、另一家的消费系数和充值倍率换算。`;
+        }
+
+        function syncRangeMaximum(current = comparison()) {
+          const target = Math.max(1800, current.cashBreakEven ? current.cashBreakEven * 1.3 : 0);
+          const maximum = Math.ceil(target / 100) * 100;
+          range.max = String(maximum);
+          if (Number(range.value) > maximum) range.value = String(maximum);
+        }
+
+        function updateLiveText() {
+          const current = comparison();
+          const normalSpend = Number(range.value);
+          const currentSvip = svipCost(normalSpend, current);
+          const currentOther = otherCost(normalSpend, current);
+          rangeOutput.textContent = money(normalSpend);
+          const compareCopy = (name, cost) => {
+            const difference = normalSpend - cost;
+            if (Math.abs(difference) < 0.01) {
+              return `${name} 与普通方案同为 <strong>${money(normalSpend)}</strong>。`;
+            }
+            if (difference > 0) {
+              return `${name} 成本为 <strong>${money(cost)}</strong>，少付 <strong>${money(difference)}</strong>。`;
+            }
+            return `${name} 成本为 <strong>${money(cost)}</strong>，多付 <strong>${money(-difference)}</strong>。`;
+          };
+
+          liveCopy.innerHTML = `${compareCopy('SVIP', currentSvip)}<br>${compareCopy(OTHER_PROVIDER.name, currentOther)}`;
+        }
+
+        function populateScenarios() {
+          const current = comparison();
+          const maximum = Number(range.max);
+          const points = [...new Set([100, 300, 600, Math.round(maximum / 2 / 100) * 100, maximum])]
+            .filter((point) => point <= maximum)
+            .sort((first, second) => first - second);
+          scenarioTable.innerHTML = points
+            .map((normalSpend) => {
+              const svip = svipCost(normalSpend, current);
+              const other = otherCost(normalSpend, current);
+              const lowest = [
+                { name: '普通方案', cost: normalSpend },
+                { name: 'SVIP', cost: svip },
+                { name: OTHER_PROVIDER.name, cost: other },
+              ].reduce((candidate, item) => (item.cost < candidate.cost ? item : candidate));
+              return `<tr>
+                <td>${money(normalSpend)}</td>
+                <td>${money(svip)}</td>
+                <td>${money(other)}</td>
+                <td class="save">${lowest.name}</td>
+              </tr>`;
+            })
+            .join('');
+        }
+
+        function niceMax(value) {
+          const magnitude = 10 ** Math.floor(Math.log10(Math.max(value, 1)));
+          const normalized = value / magnitude;
+          const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+          return nice * magnitude;
+        }
+
+        function drawChart() {
+          const current = comparison();
+          const bounds = canvas.getBoundingClientRect();
+          const dpr = window.devicePixelRatio || 1;
+          const width = Math.max(1, Math.round(bounds.width));
+          const height = Math.max(1, Math.round(bounds.height));
+          canvas.width = Math.round(width * dpr);
+          canvas.height = Math.round(height * dpr);
+          context.setTransform(dpr, 0, 0, dpr, 0, 0);
+          context.clearRect(0, 0, width, height);
+
+          const compact = width < 560;
+          const padding = { left: compact ? 48 : 59, right: compact ? 16 : 27, top: 29, bottom: 48 };
+          const chartWidth = width - padding.left - padding.right;
+          const chartHeight = height - padding.top - padding.bottom;
+          const xMax = Number(range.max);
+          const breakEven = mode === 'economic' ? current.economicBreakEven : current.cashBreakEven;
+          const maxValue = Math.max(xMax, svipCost(xMax, current), otherCost(xMax, current), breakEven || 0) * 1.06;
+          const yMax = niceMax(maxValue);
+          const xToPx = (x) => padding.left + (x / xMax) * chartWidth;
+          const yToPx = (y) => padding.top + chartHeight - (y / yMax) * chartHeight;
+
+          context.font = '12px Inter, ui-sans-serif, system-ui, sans-serif';
+          context.textBaseline = 'middle';
+          context.strokeStyle = '#d9e1e8';
+          context.fillStyle = '#64748b';
+          context.lineWidth = 1;
+
+          const yTicks = 5;
+          for (let tick = 0; tick <= yTicks; tick += 1) {
+            const value = (yMax / yTicks) * tick;
+            const y = yToPx(value);
+            context.beginPath();
+            context.moveTo(padding.left, y);
+            context.lineTo(width - padding.right, y);
+            context.stroke();
+            context.textAlign = 'right';
+            context.fillText(`¥${Math.round(value)}`, padding.left - 9, y);
+          }
+
+          const xTicks = compact ? 3 : 6;
+          for (let tick = 0; tick <= xTicks; tick += 1) {
+            const value = (xMax / xTicks) * tick;
+            const x = xToPx(value);
+            context.beginPath();
+            context.moveTo(x, padding.top);
+            context.lineTo(x, padding.top + chartHeight);
+            context.stroke();
+            context.textAlign = 'center';
+            context.fillText(`¥${Math.round(value)}`, x, height - 22);
+          }
+
+          if (breakEven !== null && breakEven <= xMax) {
+            const breakX = xToPx(breakEven);
+            context.save();
+            context.setLineDash([5, 4]);
+            context.strokeStyle = '#2563a7';
+            context.beginPath();
+            context.moveTo(breakX, padding.top);
+            context.lineTo(breakX, padding.top + chartHeight);
+            context.stroke();
+            context.restore();
+
+            context.fillStyle = '#2563a7';
+            context.textAlign = breakX > width - 145 ? 'right' : 'left';
+            context.fillText(`平衡 ¥${Math.round(breakEven)}`, breakX + (breakX > width - 145 ? -6 : 6), padding.top + 11);
+          }
+
+          function pathFor(fn, color, lineWidth = 3) {
+            context.beginPath();
+            for (let x = 0; x <= xMax; x += Math.max(8, xMax / 240)) {
+              const px = xToPx(x);
+              const py = yToPx(fn(x));
+              if (x === 0) context.moveTo(px, py);
+              else context.lineTo(px, py);
+            }
+            context.strokeStyle = color;
+            context.lineWidth = lineWidth;
+            context.lineJoin = 'round';
+            context.lineCap = 'round';
+            context.stroke();
+          }
+
+          pathFor((x) => x, '#cf5e15');
+          pathFor((x) => svipCost(x, current), '#087e6b');
+          pathFor((x) => otherCost(x, current), '#ad343e');
+
+          const selectedSpend = pointerSpend === null ? Number(range.value) : pointerSpend;
+          const selectedX = xToPx(selectedSpend);
+          const selectedStandardY = yToPx(selectedSpend);
+          const selectedSvipY = yToPx(svipCost(selectedSpend, current));
+          const selectedOtherY = yToPx(otherCost(selectedSpend, current));
+          context.strokeStyle = 'rgba(31, 41, 51, 0.25)';
+          context.lineWidth = 1;
+          context.beginPath();
+          context.moveTo(selectedX, padding.top);
+          context.lineTo(selectedX, padding.top + chartHeight);
+          context.stroke();
+
+          [[selectedStandardY, '#cf5e15'], [selectedSvipY, '#087e6b'], [selectedOtherY, '#ad343e']].forEach(([y, color]) => {
+            context.beginPath();
+            context.fillStyle = '#ffffff';
+            context.strokeStyle = color;
+            context.lineWidth = 3;
+            context.arc(selectedX, y, 4.5, 0, Math.PI * 2);
+            context.fill();
+            context.stroke();
+          });
+
+          context.fillStyle = '#64748b';
+          context.textAlign = 'center';
+          context.fillText('普通方案等效累计消费（元）', padding.left + chartWidth / 2, height - 5);
+          context.save();
+          context.translate(14, padding.top + chartHeight / 2);
+          context.rotate(-Math.PI / 2);
+          context.fillText(mode === 'economic' ? '净经济成本（元）' : '累计现金支出（元）', 0, 0);
+          context.restore();
+        }
+
+        function showTooltip(clientX, clientY) {
+          const current = comparison();
+          const rect = canvas.getBoundingClientRect();
+          const width = rect.width;
+          const padding = { left: width < 560 ? 48 : 59, right: width < 560 ? 16 : 27 };
+          const localX = Math.max(padding.left, Math.min(clientX - rect.left, width - padding.right));
+          pointerSpend = ((localX - padding.left) / (width - padding.left - padding.right)) * Number(range.max);
+          const normalSpend = Math.round(pointerSpend / 10) * 10;
+          pointerSpend = normalSpend;
+          const svip = svipCost(normalSpend, current);
+          const other = otherCost(normalSpend, current);
+          tooltip.innerHTML = `<strong>等效消费 ${money(normalSpend)}</strong>${current.standard.name}：${money(normalSpend)}<br>${current.svip.name}：${money(svip)}<br>${OTHER_PROVIDER.name}：${money(other)}`;
+          tooltip.hidden = false;
+          const tooltipX = Math.min(Math.max(clientX - rect.left, 70), rect.width - 180);
+          const tooltipY = Math.max(clientY - rect.top, 80);
+          tooltip.style.left = `${tooltipX}px`;
+          tooltip.style.top = `${tooltipY}px`;
+          drawChart();
+        }
+
+        function updateModeCopy() {
+          const current = comparison();
+          const breakEven = mode === 'economic' ? current.economicBreakEven : current.cashBreakEven;
+          if (mode === 'economic') {
+            chartDescription.textContent = '经济成本会扣除尚未消费的账户额度价值，适合判断长期是否值得开通。';
+            breakLabel.textContent = breakEven === null ? '所选组合不回本' : `经济平衡点 ¥${Math.round(breakEven)}`;
+          } else {
+            chartDescription.textContent = '现金支出把开通 SVIP 的 ¥300 一次性支付计入，适合判断实际资金何时回本。';
+            breakLabel.textContent = breakEven === null ? '所选组合不回本' : `现金平衡点 ¥${Math.round(breakEven)}`;
+          }
+        }
+
+        function refresh() {
+          updateLiveText();
+          drawChart();
+        }
+
+        function applyComparison() {
+          pointerSpend = null;
+          syncRangeMaximum();
+          updateSummary();
+          updateModeCopy();
+          populateScenarios();
+          refresh();
+        }
+
+        range.addEventListener('input', () => {
+          pointerSpend = null;
+          refresh();
+        });
+
+        [standardSelect, svipSelect].forEach((select) => {
+          select.addEventListener('change', applyComparison);
+        });
+
+        buttons.forEach((button) => {
+          button.addEventListener('click', () => {
+            mode = button.dataset.mode;
+            buttons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+            pointerSpend = null;
+            updateSummary();
+            updateModeCopy();
+            populateScenarios();
+            refresh();
+          });
+        });
+
+        canvas.addEventListener('pointermove', (event) => showTooltip(event.clientX, event.clientY));
+        canvas.addEventListener('pointerleave', () => {
+          pointerSpend = null;
+          tooltip.hidden = true;
+          drawChart();
+        });
+        window.addEventListener('resize', drawChart);
+
+        populateSelects();
+        applyComparison();
+      })();
+    </script>
+  </body>
+</html>
