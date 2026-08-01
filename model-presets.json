@@ -28,21 +28,21 @@
     "id": "gpt-5.6-terra",
     "name": "GPT-5.6 Terra",
     "vendor": "OpenAI",
-    "priceNew": 2.5,
-    "priceOut": 15,
-    "priceHit": 0.25,
-    "priceCreate": 3.125,
-    "note": "参考价：输入 $2.50/M、输出 $15/M；缓存读取 $0.25/M (输入价 10%)、缓存写入 $3.125/M (输入价 1.25×)。请以官方价格页为准。"
+    "priceNew": 2,
+    "priceOut": 12,
+    "priceHit": 0.2,
+    "priceCreate": 2.5,
+    "note": "参考价：输入 $2/M、输出 $12/M；缓存读取 $0.2/M (输入价 10%)、缓存写入 $2.5/M (输入价 1.25×)。请以官方价格页为准。"
   },
   {
     "id": "gpt-5.6-luna",
     "name": "GPT-5.6 Luna",
     "vendor": "OpenAI",
-    "priceNew": 1,
-    "priceOut": 6,
-    "priceHit": 0.1,
-    "priceCreate": 1.25,
-    "note": "参考价：输入 $1/M、输出 $6/M；缓存读取 $0.1/M (输入价 10%)、缓存写入 $1.25/M (输入价 1.25×)。请以官方价格页为准。"
+    "priceNew": 0.2,
+    "priceOut": 1.2,
+    "priceHit": 0.02,
+    "priceCreate": 0.25,
+    "note": "参考价：输入 $0.2/M、输出 $1.2/M；缓存读取 $0.02/M (输入价 10%)、缓存写入 $0.25/M (输入价 1.25×)。请以官方价格页为准。"
   },
   {
     "id": "claude-opus-5",

@@ -1,6 +1,12 @@
 import { $ } from './dom.js';
 import { readInputs } from './pricing.js';
-import { loadCalculatorState, loadTheme, saveCalculatorState, saveTheme } from './storage.js';
+import {
+  clearLocalStorage,
+  loadCalculatorState,
+  loadTheme,
+  saveCalculatorState,
+  saveTheme,
+} from './storage.js';
 import { renderChart, renderSummary } from './chart.js';
 import {
   applyPricingPreset,
@@ -17,7 +23,7 @@ import {
 } from './presets.js';
 import { setupModelsDevBrowser } from './models-dev.js';
 
-const DEFAULT_PRESET_ID = 'gpt-5.5';
+const DEFAULT_PRESET_ID = 'gpt-5.6-sol';
 const LEGACY_PRESET_IDS = {
   gpt55: 'gpt-5.5',
   gpt56sol: 'gpt-5.6-sol',
@@ -64,6 +70,16 @@ function initTheme() {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
     if (!loadTheme()) applyTheme(event.matches ? 'dark' : 'light');
   });
+}
+
+function clearStoredData() {
+  if (!window.confirm('确定清理本地存储中的计算器设置吗？页面将重新加载。')) return;
+  clearLocalStorage();
+  window.location.reload();
+}
+
+function initStorageControls() {
+  $('clearStorage').addEventListener('click', clearStoredData);
 }
 
 function saveToStorage() {
@@ -125,6 +141,7 @@ function registerFormListeners() {
 
 async function init() {
   initTheme();
+  initStorageControls();
   await loadPricingPresets();
   const saved = loadCalculatorState();
   initPricingPresets(DEFAULT_PRESET_ID);

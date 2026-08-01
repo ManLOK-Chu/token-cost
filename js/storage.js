@@ -36,3 +36,9 @@ export function saveTheme(theme) {
     localStorage.setItem(THEME_KEY, theme);
   } catch (_) {}
 }
+
+export function clearLocalStorage() {
+  try {
+    localStorage.clear();
+  } catch (_) {}
+}

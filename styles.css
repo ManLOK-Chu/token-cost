@@ -661,12 +661,13 @@ footer a:hover {
   text-decoration: underline;
 }
 
-.theme-toggle {
+.theme-toggle,
+.clear-storage {
   position: fixed;
   bottom: 24px;
-  right: 24px;
   width: 52px;
   height: 52px;
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--line);
   background: var(--panel);
@@ -680,13 +681,24 @@ footer a:hover {
   z-index: 100;
 }
 
-.theme-toggle:hover {
+.theme-toggle { right: 24px; font-size: 24px; }
+.clear-storage { right: 88px; font-size: 22px; }
+
+.theme-toggle:hover,
+.clear-storage:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-.theme-toggle:active {
+.theme-toggle:active,
+.clear-storage:active {
   transform: scale(0.95);
+}
+
+.clear-storage:focus-visible,
+.theme-toggle:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 3px;
 }
 
 @keyframes fadeIn {
