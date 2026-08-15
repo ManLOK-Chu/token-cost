@@ -65,14 +65,14 @@
     "note": "参考价：输入 $10/M、输出 $50/M；缓存命中按输入 10%、缓存创建按输入 1.25× 推导。请以官方价格页为准。"
   },
   {
-    "id": "grok-4.5",
-    "name": "Grok 4.5",
+    "id": "grok-4.6",
+    "name": "Grok 4.6",
     "vendor": "xAI",
     "priceNew": 2,
     "priceOut": 6,
-    "priceHit": 0.3,
+    "priceHit": 0.5,
     "priceCreate": 0,
-    "note": "参考价：输入 $2/M、输出 $6/M；缓存读取 $0.3/M。目录未提供缓存写入价，暂按 $0 填充。请以官方价格页为准。"
+    "note": "参考价：输入 $2/M、输出 $6/M；缓存读取 $0.5/M。目录未提供缓存写入价，暂按 $0 填充。请以官方价格页为准。"
   },
   {
     "id": "kimi-k3",
@@ -128,10 +128,10 @@
     "id": "claude-sonnet-5",
     "name": "Claude Sonnet 5",
     "vendor": "Anthropic",
-    "priceNew": 3,
-    "priceOut": 15,
-    "priceHit": 0.3,
-    "priceCreate": 3.75,
-    "note": "参考价：输入 $3/M、输出 $15/M；缓存读取 $0.3/M、缓存写入 $3.75/M。请以官方价格页为准。"
+    "priceNew": 2,
+    "priceOut": 10,
+    "priceHit": 0.2,
+    "priceCreate": 2.5,
+    "note": "参考价：输入 $2/M、输出 $10/M；缓存读取 $0.2/M、缓存写入 $2.5/M。请以官方价格页为准。"
   }
 ]
