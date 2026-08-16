@@ -19,6 +19,25 @@
     </header>
 
     <main>
+      <div class="toolbar">
+        <button type="button" id="undoBtn" class="toolbar-btn" disabled title="撤销 (Ctrl+Z)">
+          <span class="toolbar-icon">↶</span>
+          <span>撤销</span>
+        </button>
+        <button type="button" id="redoBtn" class="toolbar-btn" disabled title="重做 (Ctrl+Shift+Z)">
+          <span class="toolbar-icon">↷</span>
+          <span>重做</span>
+        </button>
+        <button type="button" id="historyBtn" class="toolbar-btn" title="历史记录 (Ctrl+H)">
+          <span class="toolbar-icon">📋</span>
+          <span>历史</span>
+        </button>
+        <button type="button" id="shareBtn" class="toolbar-btn" title="分享链接">
+          <span class="toolbar-icon">🔗</span>
+          <span>分享</span>
+        </button>
+      </div>
+
       <section class="grid top-grid" aria-label="成本与 token 输入">
         <div class="panel">
           <div class="panel-head">
@@ -62,15 +81,19 @@
           <div class="inputs">
             <label>新增输入 tokens
               <input id="tokensNew" type="number" min="0" step="1" value="799000">
+              <div class="input-hint">支持单位: 1M = 1,000,000 / 500K = 500,000</div>
             </label>
             <label>输出 tokens
               <input id="tokensOut" type="number" min="0" step="1" value="24000">
+              <div class="input-hint">支持单位: 1M = 1,000,000 / 500K = 500,000</div>
             </label>
             <label>当前缓存命中 tokens
               <input id="tokensHit" type="number" min="0" step="1" value="1983000">
+              <div class="input-hint">支持单位: 1M = 1,000,000 / 500K = 500,000</div>
             </label>
             <label>当前缓存创建 tokens
               <input id="tokensCreate" type="number" min="0" step="1" value="0">
+              <div class="input-hint">支持单位: 1M = 1,000,000 / 500K = 500,000</div>
             </label>
             <label>计费倍率
               <input id="multiplier" type="number" min="0" step="0.01" value="1">

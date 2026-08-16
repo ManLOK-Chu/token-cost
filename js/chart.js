@@ -1,6 +1,7 @@
 import { $, clamp } from './dom.js';
 import { MILLION, buildSeries, calculateCostAtRate, formatMoney, formatPercent, formatToken } from './pricing.js';
 import { getModelStyle } from './presets.js';
+import { throttle } from './interaction.js';
 
 const chartSize = { width: 980, height: 430 };
 const margin = { top: 34, right: 34, bottom: 58, left: 78 };
@@ -393,12 +394,15 @@ export function renderChart(data, presets, visibleIds, defaultId) {
     showTooltip(rate);
   }
 
+  // 使用节流优化鼠标移动性能
+  const throttledShowPoint = throttle((event) => showPoint(event.clientX), 50);
+
   rateExplorer.disabled = false;
   rateExplorer.oninput = (event) => {
     hideTooltip();
     updateSelection(Number(event.target.value) / 100);
   };
-  hoverRect.addEventListener('mousemove', (event) => showPoint(event.clientX));
+  hoverRect.addEventListener('mousemove', throttledShowPoint);
   hoverRect.addEventListener('mouseenter', (event) => showPoint(event.clientX));
   hoverRect.addEventListener('mouseleave', hideTooltip);
   updateSelection(data.currentRate);

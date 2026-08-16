@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>交互优化测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f6f8fb;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .test-section h2 {
+      margin-top: 0;
+      color: #1a1d27;
+    }
+    .success { color: #047857; font-weight: bold; }
+    .error { color: #f04438; font-weight: bold; }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #f0f2f5;
+    }
+    #testInput {
+      width: 200px;
+      padding: 10px;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8fafc;
+      border-radius: 6px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 交互优化测试页面</h1>
+  
+  <div class="test-section">
+    <h2>1. 模块加载测试</h2>
+    <div id="moduleTest">测试中...</div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. 防抖测试</h2>
+    <p>快速输入文字，应该在停止输入 300ms 后才触发一次</p>
+    <input type="text" id="testInput" placeholder="快速输入...">
+    <div class="result">
+      触发次数: <span id="debounceCount">0</span><br>
+      最后值: <span id="debounceValue">-</span>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>3. 节流测试</h2>
+    <p>点击按钮，即使快速点击也只会每 200ms 触发一次</p>
+    <button id="throttleBtn">快速点击我</button>
+    <div class="result">
+      触发次数: <span id="throttleCount">0</span><br>
+      总点击次数: <span id="clickCount">0</span>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>4. 键盘快捷键测试</h2>
+    <p>按下以下快捷键测试:</p>
+    <ul>
+      <li><kbd>Ctrl/Cmd + K</kbd> - 应该显示消息</li>
+      <li><kbd>Escape</kbd> - 应该显示消息</li>
+    </ul>
+    <div class="result" id="keyboardResult">等待按键...</div>
+  </div>
+
+  <div class="test-section">
+    <h2>5. 数字输入增强测试</h2>
+    <p>聚焦输入框后使用鼠标滚轮调整数值</p>
+    <input type="number" id="numberInput" value="100" min="0" max="1000" step="10">
+    <div class="result">
+      当前值: <span id="numberValue">100</span>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      debounce,
+      throttle,
+      KeyboardShortcuts,
+      enhanceNumberInput,
+      createLoadingIndicator
+    } from './js/interaction.js';
+
+    // 1. 模块加载测试
+    document.getElementById('moduleTest').innerHTML = 
+      '<span class="success">✓ 所有模块加载成功</span>';
+
+    // 2. 防抖测试
+    let debounceCount = 0;
+    const debouncedFn = debounce((value) => {
+      debounceCount++;
+      document.getElementById('debounceCount').textContent = debounceCount;
+      document.getElementById('debounceValue').textContent = value;
+    }, 300);
+
+    document.getElementById('testInput').addEventListener('input', (e) => {
+      debouncedFn(e.target.value);
+    });
+
+    // 3. 节流测试
+    let throttleCount = 0;
+    let clickCount = 0;
+    const throttledFn = throttle(() => {
+      throttleCount++;
+      document.getElementById('throttleCount').textContent = throttleCount;
+    }, 200);
+
+    document.getElementById('throttleBtn').addEventListener('click', () => {
+      clickCount++;
+      document.getElementById('clickCount').textContent = clickCount;
+      throttledFn();
+    });
+
+    // 4. 键盘快捷键测试
+    const kb = new KeyboardShortcuts();
+    const keyboardResult = document.getElementById('keyboardResult');
+    
+    kb.register('k', {
+      ctrl: true,
+      meta: true,
+      handler: () => {
+        keyboardResult.innerHTML = '<span class="success">✓ Ctrl/Cmd+K 触发成功！</span>';
+        setTimeout(() => {
+          keyboardResult.textContent = '等待按键...';
+        }, 2000);
+      }
+    });
+
+    kb.register('escape', {
+      handler: () => {
+        keyboardResult.innerHTML = '<span class="success">✓ Escape 触发成功！</span>';
+        setTimeout(() => {
+          keyboardResult.textContent = '等待按键...';
+        }, 2000);
+      }
+    });
+
+    // 5. 数字输入增强测试
+    const numberInput = document.getElementById('numberInput');
+    enhanceNumberInput(numberInput, {
+      onchange: (value) => {
+        document.getElementById('numberValue').textContent = value;
+      }
+    });
+
+    // 显示操作系统信息
+    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+    console.log('检测到操作系统:', isMac ? 'macOS' : '其他');
+  </script>
+</body>
+</html>
