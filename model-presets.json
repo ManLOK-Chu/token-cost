@@ -85,24 +85,44 @@
     "note": "参考价：输入 $3/M、输出 $15/M；缓存读取 $0.3/M、缓存写入 $3/M。请以官方价格页为准。"
   },
   {
-    "id": "deepseek-v4-pro",
-    "name": "DeepSeek V4 Pro",
+    "id": "deepseek-v4-pro-off-peak",
+    "name": "DeepSeek V4 Pro（非峰时）",
     "vendor": "DeepSeek",
-    "priceNew": 0.435,
-    "priceOut": 0.87,
-    "priceHit": 0.003625,
+    "priceNew": 0.66,
+    "priceOut": 1.98,
+    "priceHit": 0.022,
     "priceCreate": 0,
-    "note": "参考价：输入 $0.435/M、输出 $0.87/M；缓存命中约输入价的 0.8%。无缓存创建成本。请以官方价格页为准。"
+    "note": "非峰时价格：输入 $0.66/M、输出 $1.98/M、缓存读取 $0.022/M。无单独缓存创建价，暂按 $0。非峰时为 UTC 01:00–04:00、06:00–10:00 之外的时段。请以官方价格页为准。"
   },
   {
-    "id": "deepseek-v4-flash",
-    "name": "DeepSeek V4 Flash",
+    "id": "deepseek-v4-pro-peak",
+    "name": "DeepSeek V4 Pro（峰时）",
     "vendor": "DeepSeek",
-    "priceNew": 0.14,
-    "priceOut": 0.28,
-    "priceHit": 0.0028,
+    "priceNew": 1.32,
+    "priceOut": 3.96,
+    "priceHit": 0.044,
     "priceCreate": 0,
-    "note": "参考价：输入 $0.14/M、输出 $0.28/M；缓存命中约输入价的 2%。无缓存创建成本。性价比极高。"
+    "note": "峰时价格：输入 $1.32/M、输出 $3.96/M、缓存读取 $0.044/M。无单独缓存创建价，暂按 $0。峰时为 UTC 01:00–04:00、06:00–10:00。请以官方价格页为准。"
+  },
+  {
+    "id": "deepseek-v4-flash-off-peak",
+    "name": "DeepSeek V4 Flash（非峰时）",
+    "vendor": "DeepSeek",
+    "priceNew": 0.22,
+    "priceOut": 0.66,
+    "priceHit": 0.007,
+    "priceCreate": 0,
+    "note": "非峰时价格：输入 $0.22/M、输出 $0.66/M、缓存读取 $0.007/M。无单独缓存创建价，暂按 $0。非峰时为 UTC 01:00–04:00、06:00–10:00 之外的时段。请以官方价格页为准。"
+  },
+  {
+    "id": "deepseek-v4-flash-peak",
+    "name": "DeepSeek V4 Flash（峰时）",
+    "vendor": "DeepSeek",
+    "priceNew": 0.44,
+    "priceOut": 1.32,
+    "priceHit": 0.014,
+    "priceCreate": 0,
+    "note": "峰时价格：输入 $0.44/M、输出 $1.32/M、缓存读取 $0.014/M。无单独缓存创建价，暂按 $0。峰时为 UTC 01:00–04:00、06:00–10:00。请以官方价格页为准。"
   },
   {
     "id": "glm-5.2",

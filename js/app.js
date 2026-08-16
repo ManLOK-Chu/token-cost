@@ -35,6 +35,8 @@ const LEGACY_PRESET_IDS = {
   'claude-sonnet-4-6': 'claude-sonnet-5',
   'glm-52': 'glm-5.2',
   'cursor-composer-25': 'cursor-composer-2.5',
+  'deepseek-v4-pro': 'deepseek-v4-pro-off-peak',
+  'deepseek-v4-flash': 'deepseek-v4-flash-off-peak',
 };
 const TOKEN_FIELDS = ['tokensNew', 'tokensOut', 'tokensHit', 'tokensCreate'];
 const FORM_FIELDS = [
@@ -128,15 +130,18 @@ function applyModelsDevModel(model) {
 }
 
 function registerFormListeners() {
-  FORM_FIELDS.forEach((id) => $(id).addEventListener('input', () => {
-    if (id === 'pricingPreset') {
-      const newPreset = $('pricingPreset').value;
-      applyPricingPreset(newPreset);
-      ensureModelVisible(newPreset);
-      renderModelSelector(newPreset, update);
-    }
-    update();
-  }));
+  FORM_FIELDS.forEach((id) => $(id).addEventListener(
+    id === 'pricingPreset' ? 'change' : 'input',
+    () => {
+      if (id === 'pricingPreset') {
+        const newPreset = $('pricingPreset').value;
+        applyPricingPreset(newPreset);
+        ensureModelVisible(newPreset);
+        renderModelSelector(newPreset, update);
+      }
+      update();
+    },
+  ));
 }
 
 async function init() {
