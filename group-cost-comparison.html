@@ -477,7 +477,7 @@
           </div>
           <div class="ratio other">
             <span id="other-ratio-label">BigModel · 充值 10x</span>
-            <strong id="other-ratio-value">1.8x</strong>
+            <strong id="other-ratio-value">2x</strong>
           </div>
         </div>
       </header>
@@ -494,7 +494,7 @@
           <select id="svip-group"></select>
           <small>SVIP 可选择所有当前快照中的分组。</small>
         </div>
-        <p class="picker-note">系数来自你提供的带登录态与不带登录态接口快照。<code>svip</code> 与 <code>SVIP专属GPT</code> 不会出现在普通用户选择器中；BigModel 固定按消费系数 1.8x、充值倍率 10x 计算。</p>
+        <p class="picker-note">系数来自你提供的带登录态与不带登录态接口快照。<code>svip</code> 与 <code>SVIP专属GPT</code> 不会出现在普通用户选择器中；BigModel 固定按消费系数 2x、充值倍率 10x 计算。</p>
       </section>
 
       <section class="key-result" aria-label="结论">
@@ -530,7 +530,7 @@
         <div class="legend" aria-hidden="true">
           <span class="legend-item"><i class="legend-line standard"></i><span id="standard-legend">普通用户 · GPT Codex 全家桶</span></span>
           <span class="legend-item"><i class="legend-line svip"></i><span id="svip-legend">SVIP · SVIP专属GPT</span></span>
-          <span class="legend-item"><i class="legend-line other"></i><span id="other-legend">BigModel · 1.8x / 充值 10x</span></span>
+          <span class="legend-item"><i class="legend-line other"></i><span id="other-legend">BigModel · 2x / 充值 10x</span></span>
           <span class="legend-item"><i class="legend-line marker"></i><span id="break-label">经济平衡点 ¥291</span></span>
         </div>
 
@@ -595,7 +595,7 @@
         const MEMBERSHIP_NET_COST = MEMBERSHIP_CASH - MEMBERSHIP_CREDIT / RECHARGE_MULTIPLIER;
         const OTHER_PROVIDER = {
           name: 'BigModel',
-          coefficient: 1.8,
+          coefficient: 2,
           rechargeMultiplier: 10,
         };
 
